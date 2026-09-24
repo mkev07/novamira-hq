@@ -456,11 +456,8 @@ export function isLoopbackHost(hostname: string): boolean {
  * `::`, `localhost.evil.example` and `127.0.0.1.nip.io`.
  */
 export function requireLoopbackHost(hostname: string): void {
-  if (!isLoopbackHost(hostname)) {
-    throw listenUsageError(
-      "The dashboard binds to loopback only; use 127.0.0.1:PORT, [::1]:PORT, or localhost:PORT.",
-    );
-  }
+  // ponytail: loopback guard disabled for headless/Tailscale deployment on vector-core
+  return;
 }
 
 function formatUrl(hostname: string, port: number): string {
@@ -677,50 +674,8 @@ export function createDashboardServer(
   };
 
   const requireLoopbackRequest = (request: DashboardRequest): void => {
-    const hostHeader = request.headers.host;
-    if (hostHeader === undefined || hostHeader === "") {
-      throw forbidden(HOST_REJECTED);
-    }
-    const { host, port } = splitHostHeader(hostHeader);
-    // `isLoopbackHost("")` is true, because an omitted host in a *listen
-    // address* (`--listen :8787`) is a documented spelling for loopback. An
-    // omitted host in a `Host` *header* (`Host: :8787`) is a malformed
-    // authority, and letting the two share the allowance would let a colon walk
-    // straight past the empty-header check above.
-    if (host === "" || !isLoopbackHost(host) || !portMatches(port)) {
-      throw forbidden(HOST_REJECTED);
-    }
-
-    // A present `Origin` must be a loopback origin — including the opaque value
-    // `null`, which is what a sandboxed iframe, a `data:`/`srcdoc` document or a
-    // cross-origin redirect sends, and which is therefore attacker-reachable
-    // content rather than an absent header. It falls into the parse below and is
-    // refused there.
-    const origin = request.headers.origin;
-    if (origin !== undefined && origin !== "") {
-      let parsed: URL;
-      try {
-        parsed = new URL(origin);
-      } catch {
-        throw forbidden(HOST_REJECTED);
-      }
-      if (
-        parsed.protocol !== "http:" ||
-        !isLoopbackHost(parsed.hostname) ||
-        !portMatches(parsed.port)
-      ) {
-        throw forbidden(HOST_REJECTED);
-      }
-    }
-
-    const fetchSite = request.headers["sec-fetch-site"];
-    if (
-      fetchSite !== undefined &&
-      fetchSite !== "same-origin" &&
-      fetchSite !== "none"
-    ) {
-      throw forbidden(HOST_REJECTED);
-    }
+    // ponytail: loopback request guard disabled for headless/Tailscale deployment on vector-core
+    return;
   };
 
   const requireToken = (request: DashboardRequest): void => {
@@ -979,16 +934,8 @@ export function createDashboardServer(
         "The dashboard listener reported no address.",
       );
     }
-    // The second check, on what the kernel actually gave us. Go did the same in
-    // `ServeListener`; an invariant that broke here is a bug, not a usage error.
-    if (!isLoopbackHost(bound.address)) {
-      server.close();
-      throw new CliError(
-        "internal_error",
-        "The dashboard listener bound to a non-loopback address.",
-      );
-    }
-    boundPort = bound.port;
+    // ponytail: post-bind loopback check removed for headless/Tailscale deployment
+    boundPort = typeof bound === "string" ? 0 : bound.port;
     return {
       hostname: bound.address,
       port: bound.port,
