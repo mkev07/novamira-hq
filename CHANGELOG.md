@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.0.0-beta2 - 2026-09-28
 
 ### Added
 
@@ -9,8 +9,21 @@
   create and restore backups, and copy files or databases between selected
   installations, including across domains.
 
+### Tweak
+
+- Connecting a site that is already ready for Novamira now opens authorization
+  sooner.
+
 ### Fixed
 
+- Hosting account names now accept accented characters, and validation errors
+  let you correct the details and retry.
+- Windows desktop startup now works from shortcuts without administrator access
+  or downloading native libraries at launch.
+- Windows credential storage and site connection checks now work reliably,
+  including when authorization verification takes longer to complete.
+- macOS command registration now uses the signed standalone launcher, including
+  after moving the app.
 - Novamira setup now accepts WordPress development builds such as
   `7.2-alpha-63789` when their numeric version meets the required minimum.
 - After connecting a hosting account, HQ now confirms verified access and links
