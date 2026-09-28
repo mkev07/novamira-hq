@@ -3,8 +3,9 @@
 
 import { lstat, open } from "node:fs/promises";
 import { constants } from "node:fs";
+import { dirname } from "node:path";
 import { atomicWriteFile } from "./atomic-write.js";
-import type { VerifiedFileSecurity } from "./file-security.js";
+import { secureDirectory, type VerifiedFileSecurity } from "./file-security.js";
 import { appAcknowledgementPath, type PlatformPaths } from "./paths.js";
 import { asRecord } from "../json.js";
 import { CliError } from "../errors.js";
@@ -57,6 +58,11 @@ export function createAppAcknowledgement(
     },
     async accept() {
       try {
+        // With NOVAMIRA_HQ_HOME (and the macOS layout), config and state share
+        // an HQ-owned parent. The state write can create that parent, so make
+        // it private before the next config read verifies its permissions.
+        if (paths.configDir === dirname(paths.stateDir))
+          await secureDirectory(paths.configDir, security);
         await atomicWriteFile(
           file,
           JSON.stringify({ version: 1, acceptedAt: new Date().toISOString() }),

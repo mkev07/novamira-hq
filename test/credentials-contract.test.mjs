@@ -29,6 +29,8 @@ import {
   MacOsKeychainBackend,
   MACOS_KEYCHAIN_TIMEOUT_MS,
   SpawnCommandExecutor,
+  WindowsCredentialManagerBackend,
+  WINDOWS_CREDENTIAL_TIMEOUT_MS,
 } from "../dist/credentials/keychain-backends.js";
 import {
   MAX_SECRET_BYTES,
@@ -436,6 +438,46 @@ test("macOS keychain requests are serialized and recover after a failure", async
   await rejected;
   assert.equal(await second, undefined);
   assert.equal(started.length, 2);
+});
+
+test("Windows credential operations have a cold-start budget and keep secrets off argv", async () => {
+  assert.equal(WINDOWS_CREDENTIAL_TIMEOUT_MS, 30_000);
+  const calls = [];
+  const backend = new WindowsCredentialManagerBackend({
+    async execute(command, args, stdin, environment) {
+      calls.push({ command, args, stdin, environment });
+      return { code: 0, signal: null, truncated: false, stdout: "" };
+    },
+  });
+  await backend.replace("a".repeat(64), PLACEHOLDER);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].command, "powershell.exe");
+  assert.equal(calls[0].stdin, PLACEHOLDER);
+  assert.equal(calls[0].environment.PSModulePath, undefined);
+  assert.match(
+    calls[0].environment.NOVAMIRA_HQ_CREDENTIAL_SOURCE,
+    /EntryPoint="CredWriteW"/,
+  );
+  assert.ok(calls[0].args.every((arg) => !arg.includes(PLACEHOLDER)));
+  assert.ok(
+    Object.values(calls[0].environment).every(
+      (value) => !value?.includes(PLACEHOLDER),
+    ),
+  );
+  assert.ok(calls[0].args.every((arg) => !arg.includes("CredWriteW")));
+  assert.match(calls[0].args.at(-1), /\}elseif\(/);
+  assert.match(calls[0].args.at(-1), /\}else\{/);
+  assert.doesNotMatch(calls[0].args.at(-1), /;elseif|;else\{/);
+
+  const timedOut = new WindowsCredentialManagerBackend({
+    async execute() {
+      return { code: null, signal: "SIGTERM", truncated: false, stdout: "" };
+    },
+  });
+  await assert.rejects(timedOut.replace("a".repeat(64), PLACEHOLDER), {
+    code: "integration_unavailable",
+    message: "The OS credential service did not respond within its time limit.",
+  });
 });
 
 test("the spawning executor reports a killed child distinguishably", async (t) => {

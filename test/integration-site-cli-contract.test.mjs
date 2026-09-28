@@ -1278,7 +1278,7 @@ test("listProfiles lists once, then asks auth status per profile", async () => {
   // always explicit, which is what stops an operator's NOVAMIRA_SITE redirecting
   // the probe.
   assert.equal(calls.length, 3);
-  assert.deepEqual(calls[0].args, sitesListArgs(10_000));
+  assert.deepEqual(calls[0].args, sitesListArgs(30_000));
   assert.deepEqual(calls.slice(1).map(siteOf).sort(), ["prod", "staging"]);
   for (const invocation of calls)
     assert.equal(invocation.env.NOVAMIRA_UPDATE_CHECK, "0");

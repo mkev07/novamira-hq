@@ -89,10 +89,11 @@ test("setup waiting state shows elapsed time only while running", () => {
 const roots = [];
 const servers = [];
 
-test("unified connect inspects without installing, asks approval when missing, and authenticates when ready", async () => {
-  for (const state of ["missing", "ready", "inactive", "error"]) {
+test("unified connect uses public readiness, then asks approval before provider setup", async () => {
+  for (const ready of [true, false]) {
     let logins = 0;
     const { server, client } = await fixture({
+      fetch: ready ? fakeFetch() : async () => httpResponse({ status: 404 }),
       connect: async (siteUrl, name) => {
         assert.equal(siteUrl, "https://example.com");
         assert.equal(name, "my-existing-site");
@@ -100,40 +101,10 @@ test("unified connect inspects without installing, asks approval when missing, a
         return { kind: "connected" };
       },
     });
-    const commands = [];
     client.action = async (request) => {
-      const command = request.body.wp_command;
-      commands.push(command);
-      if (state === "error") throw new Error("Inspection unavailable");
-      let output;
-      if (command === EXISTING_NOVAMIRA_COMMAND)
-        output =
-          state === "missing"
-            ? []
-            : [
-                {
-                  name: "novamira",
-                  version: "1.11.2",
-                  status: state === "inactive" ? "inactive" : "active",
-                },
-              ];
-      else if (command.includes("novamira_ai_abilities_enabled"))
-        output = [
-          { option_name: "novamira_ai_abilities_enabled", option_value: "1" },
-        ];
-      else
-        output = [
-          {
-            option_name: "novamira_ai_abilities_domain",
-            option_value: "example.com",
-          },
-        ];
-      return {
-        provider: "kinsta",
-        action: "wp-cli.run",
-        status: 200,
-        raw: { data: { result: JSON.stringify(output) } },
-      };
+      assert.fail(
+        `Connect must not run provider WP-CLI: ${request.body.wp_command}`,
+      );
     };
     const { recorder } = await sse(
       server,
@@ -142,21 +113,59 @@ test("unified connect inspects without installing, asks approval when missing, a
         { method: "POST", body: JSON.stringify({ token: TOKEN }) },
       ),
     );
-    assert.equal(logins, state === "ready" ? 1 : 0);
-    assert.ok(
-      commands.every(
-        (command) =>
-          command.startsWith("wp plugin list") ||
-          command.startsWith("wp option list"),
-      ),
-    );
-    if (state === "missing" || state === "inactive") {
+    assert.equal(logins, ready ? 1 : 0);
+    if (!ready) {
       assert.ok(
         recorder.find("main").markup.includes("I understand and approve"),
       );
       assert.ok(recorder.find("main").markup.includes("disabled"));
     }
   }
+});
+
+test("InstaWP Connect preflight uses site metadata without provider inspection", async () => {
+  const client = fakeClient();
+  client.provider = "instawp";
+  const fetch = fakeFetch();
+  const service = createSetupJobService({
+    hosting: { clientFromProfile: async () => client },
+    environment: {},
+    fetch,
+    now: () => START,
+    randomId: () => "a".repeat(32),
+  });
+  const ready = await service.readyForConnection(
+    "dev",
+    "env-1",
+    new AbortController().signal,
+    SITE_URL,
+  );
+  assert.equal(ready, true);
+  assert.deepEqual(fetch.calls, [`GET ${SITE_URL}${PROTECTED_RESOURCE_PATH}`]);
+  assert.deepEqual(client.commands, []);
+  await service.shutdown();
+});
+
+test("Connect preflight falls through to explicit Setup when metadata is unavailable", async () => {
+  const client = fakeClient();
+  const service = createSetupJobService({
+    hosting: { clientFromProfile: async () => client },
+    environment: {},
+    fetch: async () => httpResponse({ status: 404 }),
+    now: () => START,
+    randomId: () => "a".repeat(32),
+  });
+  assert.equal(
+    await service.readyForConnection(
+      "dev",
+      "env-1",
+      new AbortController().signal,
+      SITE_URL,
+    ),
+    false,
+  );
+  assert.deepEqual(client.commands, []);
+  await service.shutdown();
 });
 
 test.after(async () => {
@@ -343,7 +352,7 @@ async function fixture(options = {}) {
   // A monotonic clock: two jobs started in the same millisecond would make
   // `latestForTarget` a coin flip.
   let tick = 0;
-  const fetchDouble = fakeFetch();
+  const fetchDouble = options.fetch ?? fakeFetch();
   const server = createDashboardServer({
     version: "0.1.0-test",
     paths,
@@ -499,7 +508,11 @@ test("1: the page is an empty state without a target and a work panel with one",
     "I understand and approve enabling AI Abilities on this site",
     "Security note:",
     "When enabled, AI agents can execute PHP code",
-    ">Start Setup</button>",
+    ">Start Setup</span>",
+    "Starting setup…",
+    'data-indicator="setup.submitting"',
+    "$setup.submitting = true; @post",
+    "$setup.submitting",
     // `&` inside a JavaScript string literal in an attribute is hardened to
     // `&` by `jsString`, so the query separator is not an entity here.
     "/_dashboard/setup/start?profile=dev\\u0026env=env-1",
@@ -549,6 +562,7 @@ test("3: start runs provisionNovamira, records the job and repaints the page", a
   });
   const { recorder } = await sse(server, startRequest());
   assert.deepEqual(recorder.order, ["main/outer", "nav/outer", "toast/outer"]);
+  assert.deepEqual(recorder.signals, [{ setup: { submitting: false } }]);
   assert.ok(!recorder.find("toast").markup.includes("Novamira setup started."));
   const main = recorder.find("main").markup;
   assert.ok(main.includes('class="main main-novamira-setup"'));
@@ -778,6 +792,9 @@ test("4: dashboard refuses all setup without explicit AI Abilities approval", as
       .markup.includes("Approve enabling AI Abilities"),
   );
   assert.ok(!missing.recorder.find("main").markup.includes("/stream"));
+  assert.deepEqual(missing.recorder.signals, [
+    { setup: { submitting: false } },
+  ]);
   const off = await fixture({ setupPollMs: 1 });
   const started = await sse(
     off.server,
@@ -792,6 +809,9 @@ test("4: dashboard refuses all setup without explicit AI Abilities approval", as
       .markup.includes("Approve enabling AI Abilities"),
   );
   assert.ok(!started.recorder.find("main").markup.includes("/stream"));
+  assert.deepEqual(started.recorder.signals, [
+    { setup: { submitting: false } },
+  ]);
 
   const on = await fixture({ setupPollMs: 1 });
   const kept = await sse(
@@ -812,10 +832,12 @@ test("4b: an unknown profile is a danger notice and mints no job", async () => {
   const { server, client } = await fixture();
   const { recorder } = await sse(server, startRequest("profile=nope&env=e"));
   assert.ok(recorder.find("toast").markup.includes("danger"));
+  assert.deepEqual(recorder.signals, [{ setup: { submitting: false } }]);
   assert.equal(client.commands.length, 0);
   // No job record: the page still offers Start Setup rather than a Progress
   // panel for a job that could never have run.
   assert.ok(!recorder.find("main").markup.includes("<h2>Progress</h2>"));
+  assert.ok(recorder.find("main").markup.includes("Starting setup…"));
 });
 
 /* -------------------------------------------------------------------------- */
@@ -967,7 +989,7 @@ test("9: a finished job renders the handoff and no site credential", async () =>
   );
   assert.match(
     markup,
-    /<p class="field-help" hidden[^>]*data-attr[^>]*>Waiting for authorization/,
+    /<p class="field-help" hidden[^>]*data-attr[^>]*>Complete authorization in your browser if prompted\. Finishing and saving the connection may take a moment\./,
   );
 });
 

@@ -642,7 +642,7 @@ function renderConnectButton(
   return html`<button class="button tiny" type="button"${attr(
     "title",
     `Check Novamira, then authorize access in your browser. novamira-hq site-cli auth login ${address}`,
-  )}${ds.indicator(busy)}${ds.attrs({ disabled: signal(busy) })}${ds.on("click", action)}><span${ds.classes({ hidden: signal(busy) })}>Connect</span><span class="loading-inline ds-toggle"${ds.classes({ open: signal(busy) })} role="status">Preparing connection…</span></button>`;
+  )}${ds.indicator(busy)}${ds.attrs({ disabled: signal(busy) })}${ds.on("click", action)}><span${ds.classes({ hidden: signal(busy) })}>Connect</span><span class="loading-inline ds-toggle"${ds.classes({ open: signal(busy) })} role="status">Connecting…</span></button>`;
 }
 
 function setupSupported(

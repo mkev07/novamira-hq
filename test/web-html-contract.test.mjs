@@ -1372,6 +1372,7 @@ test("37: diagnostics.profile is empty — no implicit provider selection", asyn
 test("38: explicit existing-site activation defaults to false", async () => {
   const signals = rootSignals(await page(await dashboard(), "/novamira-setup"));
   assert.equal(signals.setup.enableAiAbilities, false);
+  assert.equal(signals.setup.submitting, false);
 });
 
 test("39: the rendered data-signals round-trips to defaultDashboardSignals", async () => {

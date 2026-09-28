@@ -231,8 +231,10 @@ export function createSiteProfileConnectHandler(
       );
       const reconnecting = (request.query.get("url") ?? "").trim() !== "";
       if (outcome.kind === "connected" && !reconnecting) {
-        const options = listOptions(request, signals);
-        await context.sites.refreshWarm(options.profile, options.includeEnvs);
+        // `auth login` has already saved the connection. Refreshing every
+        // known site's remote auth status here can take several more seconds;
+        // it must not hold the success screen open. Opening Sites performs
+        // that inventory refresh against the warm provider listing.
         const view = await context.loadConfigView();
         patchPage(stream, {
           page: "sites",

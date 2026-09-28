@@ -54,6 +54,7 @@ const denoConfig = JSON.parse(
   await readFile(join(root, "desktop", "deno.json"), "utf8"),
 );
 const shell = await readFile(join(root, "desktop", "main.ts"), "utf8");
+const runtime = await readFile(join(root, "desktop", "runtime.ts"), "utf8");
 const types = await readFile(join(root, "desktop", "hq.d.ts"), "utf8");
 const entry = await readFile(
   join(root, "desktop", "ai.novamira.hq.desktop.desktop"),
@@ -67,6 +68,25 @@ const smoke = await readFile(
   join(root, "scripts", "desktop-smoke.mjs"),
   "utf8",
 );
+
+test("Windows webview stages its loader outside the launch directory", () => {
+  assert.match(runtime, /Deno\.build\.os === "windows"/);
+  assert.match(
+    runtime,
+    /Deno\.makeTempDirSync\(\{ prefix: "novamira-hq-webview-" \}\)/,
+  );
+  assert.match(runtime, /Deno\.chdir\(stage\)/);
+  assert.match(runtime, /Deno\.chdir\(previous\)/);
+  assert.match(
+    shell,
+    /restoreWebviewWorkingDirectory = await prepareBundledWebview\(\)/,
+  );
+  assert.ok(
+    shell.indexOf("prepareBundledWebview()") <
+      shell.indexOf('await import("@webview/webview")'),
+  );
+  assert.match(shell, /restoreWebviewWorkingDirectory\?\.\(\)/);
+});
 const code = shell
   .split("\n")
   .filter((line) => !/^\s*(\/\/|\*|\/\*)/.test(line))
@@ -188,16 +208,16 @@ test("desktop shell is formatted and lint-clean under deno", (t) => {
   }
 });
 
-test("the Windows compile embeds the icon and is otherwise the same compile", () => {
+test("the Windows compile embeds the icon and pinned native libraries", () => {
   const { compile } = denoConfig.tasks;
   const windows = denoConfig.tasks["compile:windows"];
   assert.equal(
     windows,
     compile.replace(
       "--output",
-      `--icon ../dist-desktop/icons/${ICON_NAME}.ico --output`,
+      `--include ../dist-desktop/native-windows --icon ../dist-desktop/icons/${ICON_NAME}.ico --output`,
     ),
-    "the Windows task must be the compile task plus --icon, nothing else",
+    "the Windows task adds only the icon and its offline native libraries",
   );
   // `deno compile` bakes anything after the script path into the executable as
   // its arguments, so a flag placed there is silently not a flag.

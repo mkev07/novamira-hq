@@ -191,8 +191,11 @@ export interface SiteCliIntegration extends SiteProfileService {
   ): Promise<SiteInventorySnapshot>;
 }
 
-export const DEFAULT_PER_CHILD_TIMEOUT_MS = 10_000;
-export const DEFAULT_OVERALL_DEADLINE_MS = 20_000;
+// A live Windows auth-status round can take about 20 seconds even when it
+// succeeds. Keep the CLI's own timeout and the shared deadline above that
+// observed duration, or a just-authorized site is reported as unverified.
+export const DEFAULT_PER_CHILD_TIMEOUT_MS = 30_000;
+export const DEFAULT_OVERALL_DEADLINE_MS = 45_000;
 export const DEFAULT_CONCURRENCY = 4;
 
 function unavailable(reason: UnavailableReason): ConnectionResult {

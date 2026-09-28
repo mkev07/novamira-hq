@@ -270,6 +270,48 @@ test("config loading fails closed before credentials resolve when storage is uns
   }
 });
 
+test("config loading verifies directory and file concurrently before reading", async () => {
+  const state = await isolatedConfig();
+  try {
+    await state.store.save(DOCUMENT);
+    const started = [];
+    let release;
+    const gate = new Promise((resolve) => {
+      release = resolve;
+    });
+    const security = {
+      secureDirectory: (path) => state.security.secureDirectory(path),
+      secureFile: (path) => state.security.secureFile(path),
+      verifyDirectory: async (path) => {
+        started.push("directory");
+        await gate;
+        return state.security.verifyDirectory(path);
+      },
+      verifyFile: async (path) => {
+        started.push("file");
+        await gate;
+        return state.security.verifyFile(path);
+      },
+    };
+    const store = new ConfigStore(
+      state.paths.configFile,
+      state.locks,
+      security,
+    );
+    const loading = store.load();
+    try {
+      for (let attempt = 0; attempt < 20 && started.length < 2; attempt++)
+        await new Promise((resolve) => setTimeout(resolve, 5));
+      assert.deepEqual(started.sort(), ["directory", "file"]);
+    } finally {
+      release();
+    }
+    assert.deepEqual(plainDocument(await loading), DOCUMENT);
+  } finally {
+    await rm(state.root, { recursive: true, force: true });
+  }
+});
+
 test("config loading rejects symlinked files and parent directories", async () => {
   if (process.platform === "win32") return;
   const state = await isolatedConfig();

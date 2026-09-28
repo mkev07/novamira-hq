@@ -91,5 +91,9 @@ test("Mac downloads use a fixed loopback endpoint and command lookup stays trans
   assert.match(runtime, /Opening download in your browser/);
   assert.match(runtime, /\.local\/bin/);
   assert.match(runtime, /3000/);
-  assert.doesNotMatch(runtime, /writeFile|npm|nvm|\.codex/);
+  const commandPath = runtime.slice(
+    runtime.indexOf("export async function prepareCommandPath"),
+    runtime.indexOf("export async function prepareBundledWebview"),
+  );
+  assert.doesNotMatch(commandPath, /writeFile|npm|nvm|\.codex/);
 });

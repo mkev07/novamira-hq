@@ -253,8 +253,9 @@ async function window(): Promise<number> {
   // Loaded here and not at the top: `@webview/webview` opens the native
   // library the moment it is imported, and the server role has no window to
   // show and no FFI permission to show it with.
+  let restoreWebviewWorkingDirectory: (() => void) | undefined;
   try {
-    prepareBundledWebview();
+    restoreWebviewWorkingDirectory = await prepareBundledWebview();
     const { SizeHint, Webview } = await import("@webview/webview");
     const view = new Webview(true);
     view.title = WINDOW_TITLE;
@@ -278,6 +279,7 @@ async function window(): Promise<number> {
     console.error(`novamira-hq-desktop: ${describe(error)}`);
     return 1;
   } finally {
+    restoreWebviewWorkingDirectory?.();
     await stop(server);
   }
   return 0;

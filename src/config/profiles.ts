@@ -458,12 +458,13 @@ export class ConfigStore {
    */
   private async assertTrustedStorage(): Promise<boolean> {
     const directory = dirname(this.configFile);
-    const directoryExists = await this.verifyStoragePath(
-      directory,
-      "directory",
-    );
-    if (!directoryExists) return false;
-    return this.verifyStoragePath(this.configFile, "file");
+    // On Windows each ACL verification starts a PowerShell process. The two
+    // checks are independent, and no file content is read until both succeed.
+    const [directoryExists, fileExists] = await Promise.all([
+      this.verifyStoragePath(directory, "directory"),
+      this.verifyStoragePath(this.configFile, "file"),
+    ]);
+    return directoryExists && fileExists;
   }
 
   private async verifyStoragePath(

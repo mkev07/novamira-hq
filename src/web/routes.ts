@@ -501,13 +501,16 @@ function setupExtras(
 
 function pageHandler(context: RouteContext, page: DashboardPage): RouteHandler {
   return async (request) => {
-    const view = await context.loadConfigView();
     const reviewNotice = request.query.get("review-notice") === "1";
-    if (
-      reviewNotice ||
-      (context.appAcknowledgement &&
-        !(await context.appAcknowledgement.accepted()))
-    ) {
+    // Both reads verify separate local files. Run them together so a Windows
+    // navigation does not wait for three serial PowerShell ACL checks.
+    const [view, acknowledged] = await Promise.all([
+      context.loadConfigView(),
+      reviewNotice || !context.appAcknowledgement
+        ? Promise.resolve(true)
+        : context.appAcknowledgement.accepted(),
+    ]);
+    if (reviewNotice || !acknowledged) {
       const signals = defaultDashboardSignals(context.token);
       return htmlResponse(
         renderDocument({
