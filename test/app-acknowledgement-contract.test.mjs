@@ -66,7 +66,12 @@ test("Windows private storage retains its owner and removes inherited and explic
     assert.equal(command, "powershell.exe");
     assert.match(script, /GetOwner\(/);
     assert.match(script, /owner\.Value -ne \$sid\.Value/);
-    assert.doesNotMatch(script, /SetOwner\(/);
+    assert.match(script, /owner\.Value -ne 'S-1-5-32-544'/);
+    assert.match(
+      script,
+      /principal\.IsInRole\(\[System\.Security\.Principal\.WindowsBuiltInRole\]::Administrator\)/,
+    );
+    assert.match(script, /\$actual\.SetOwner\(\$sid\)/);
     assert.match(script, /SetAccessRuleProtection\(\$true,\$false\)/);
     assert.match(script, /RemoveAccessRuleSpecific\(/);
     assert.match(
@@ -74,7 +79,7 @@ test("Windows private storage retains its owner and removes inherited and explic
       /GetAccessControl\(\[System\.Security\.AccessControl\.AccessControlSections\]'Access,Owner'\)/,
     );
     assert.match(script, /\$item\.SetAccessControl\(\$actual\)/);
-    assert.doesNotMatch(script, /Set-Acl|SetOwner\(|Audit/);
+    assert.doesNotMatch(script, /Set-Acl|Audit/);
   }
 });
 
