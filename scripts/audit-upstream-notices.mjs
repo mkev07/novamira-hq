@@ -35,6 +35,9 @@ const candidates = [
   "LICENSE-APACHE",
   "LICENSE-APACHE-2.0",
   "LICENSE.BSD",
+  "LICENSE_APACHE_2_0.txt",
+  "LICENSE_BOOST_1_0.txt",
+  "LICENSE_MIT.txt",
   "COPYING",
   "NOTICE",
 ];

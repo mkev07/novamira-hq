@@ -1,0 +1,11 @@
+--- a/v8/third_party/glibc/src/sysdeps/ieee754/dbl-64/s_sin.c
++++ b/v8/third_party/glibc/src/sysdeps/ieee754/dbl-64/s_sin.c
+@@ -310,3 +310,8 @@
+ }
+ 
+ #endif
++
++/* Local HQ relinking verification marker; no change to mathematical behavior. */
++#if defined(__GNUC__)
++__attribute__((used)) static const char hq_license_rebuild_marker[] = "HQ_LICENSE_REBUILD_20260928";
++#endif

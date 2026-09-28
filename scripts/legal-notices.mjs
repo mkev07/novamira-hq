@@ -7,6 +7,8 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath, URL } from "node:url";
 import process from "node:process";
+import { WINDOWS_WEBVIEW_HASHES } from "./windows-native.mjs";
+import { validateDeclaredLicense } from "./runtime-license-evidence.mjs";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 const read = (path) => readFile(join(root, path), "utf8");
@@ -14,6 +16,15 @@ const manifest = JSON.parse(await read("legal/manifest.json"));
 const pkg = JSON.parse(await read("package.json"));
 const lock = JSON.parse(await read("desktop/deno.lock"));
 const components = manifest.components;
+const loader = components.find((item) => item.id === "webview2-loader");
+if (
+  loader?.artifact?.filename !== "WebView2Loader.dll" ||
+  loader.artifact.sha256 !== WINDOWS_WEBVIEW_HASHES["WebView2Loader.dll"] ||
+  createHash("sha256")
+    .update(await readFile(join(root, "legal/licenses/webview2-loader.txt")))
+    .digest("hex") !== loader.artifact.licenseSha256
+)
+  throw new Error("Legal inventory needs review: Windows WebView2 loader");
 const npmInventory = JSON.parse(await read("legal/npm-inventory.json"));
 if (
   createHash("sha256")
@@ -117,11 +128,91 @@ for (const [path, text] of texts) sections.push(`${path}\n\n${text.trimEnd()}`);
 const runtime = JSON.parse(await read("legal/denort-inventory.json"));
 const runtimeTexts = JSON.parse(await read("legal/denort-license-texts.json"));
 const native = JSON.parse(await read("legal/v8-source-notices.json"));
+const declarationEvidence = JSON.parse(
+  await read("legal/runtime-license-evidence.json"),
+);
+if (declarationEvidence.lockSha256 !== runtime.lockSha256)
+  throw new Error(
+    "Legal inventory needs review: runtime evidence lock changed",
+  );
+const declarations = new Map(
+  declarationEvidence.packages.map((item) => [
+    `${item.name}@${item.version}`,
+    item,
+  ]),
+);
+if (declarations.size !== declarationEvidence.packages.length)
+  throw new Error("Duplicate runtime license evidence");
+const standardTexts = new Map();
+for (const [id, record] of Object.entries(
+  declarationEvidence.standardLicenses,
+)) {
+  if (!/^licenses\/[a-z0-9]+(?:[.-][a-z0-9]+)*\.txt$/.test(record.file))
+    throw new Error(`Invalid standard license path: ${id}`);
+  const text = await read(`legal/${record.file}`);
+  if (
+    text.trim().length < 100 ||
+    createHash("sha256").update(text).digest("hex") !== record.sha256
+  )
+    throw new Error(`Missing or changed standard license text: ${id}`);
+  standardTexts.set(id, text);
+}
+if (
+  !Array.isArray(manifest.desktopReview.blockers) ||
+  !manifest.desktopReview.blockers.every(
+    (issue) => typeof issue === "string" && issue.trim().length > 0,
+  )
+)
+  throw new Error("Invalid desktop license blockers");
+const blockingIssues = [...manifest.desktopReview.blockers];
 sections.push(
   `DESKTOP RUNTIME SOURCE AUDIT — NOT RELEASE CLEARANCE\nReference Deno version: ${runtime.denoVersion}\nCargo.lock SHA-256: ${runtime.lockSha256}\n${runtime.scope}\nSome records describe optional, build-time or other-platform dependencies. Inclusion here does not claim that every component ships in HQ. Missing notices and unresolved scope remain explicit below.`,
 );
 const referencedTexts = new Set();
 for (const item of runtime.packages) {
+  const licenseMaterial = [];
+  const customDeclaration = declarationEvidence.customDeclarations.some(
+    (record) =>
+      record.name === item.name &&
+      record.version === item.version &&
+      record.archiveSha256 === item.checksum &&
+      record.declaredLicense === item.license &&
+      item.notices.length > 0,
+  );
+  if (
+    !declarationEvidence.reviewedLicenseExpressions.includes(item.license) &&
+    !customDeclaration
+  )
+    blockingIssues.push(
+      `Missing or unreviewed license declaration: ${item.name}@${item.version}`,
+    );
+  if (item.kind === "registry" && item.notices.length === 0) {
+    const evidence = declarations.get(`${item.name}@${item.version}`);
+    try {
+      const selected = validateDeclaredLicense(item, evidence);
+      if (!standardTexts.has(selected))
+        throw new Error(`Missing standard license: ${selected}`);
+      for (const path of evidence.additionalNativeNotices ?? []) {
+        if (!native.notices.some((notice) => notice.path === path))
+          throw new Error(
+            `Missing supplementary native notice: ${item.name}: ${path}`,
+          );
+      }
+      licenseMaterial.push(
+        `License basis: published Cargo.toml; selected ${selected}; standard terms included below.`,
+      );
+      if (evidence.authors.length)
+        licenseMaterial.push(
+          `Published author credits: ${evidence.authors.join("; ")}`,
+        );
+      for (const header of evidence.copyrightHeaders)
+        licenseMaterial.push(
+          `Original source attribution (${header.paths.join(", ")}):\n${header.text}`,
+        );
+    } catch (error) {
+      blockingIssues.push(error.message);
+    }
+  }
   sections.push(
     [
       `Runtime candidate: ${item.name} — ${item.version}`,
@@ -144,7 +235,11 @@ for (const item of runtime.packages) {
             referencedTexts.add(notice.sha256);
             return `Notice: ${notice.path} — text ${notice.sha256}${notice.source ? ` — ${notice.source}` : ""}`;
           })
-        : ["No package-specific text collected; see review above."]),
+        : item.kind === "workspace"
+          ? [
+              "Deno workspace component: covered by the bundled Deno MIT notice.",
+            ]
+          : licenseMaterial),
     ]
       .filter(Boolean)
       .join("\n"),
@@ -152,6 +247,10 @@ for (const item of runtime.packages) {
 }
 for (const sha256 of [...referencedTexts].sort())
   sections.push(`Runtime notice text ${sha256}\n\n${runtimeTexts[sha256]}`);
+for (const [id, text] of standardTexts)
+  sections.push(
+    `Standard license terms: ${id}\nSource: ${declarationEvidence.standardLicenses[id].source}\n\n${text}`,
+  );
 sections.push(
   `V8 SOURCE-TREE AUDIT\n${native.scope}\nRevision: ${native.revision}`,
 );
@@ -161,16 +260,14 @@ for (const notice of native.notices) {
   sections.push(`${notice.path}\nSource: ${notice.url}\n\n${notice.text}`);
 }
 
-if (
-  process.argv.includes("--check-desktop") &&
-  (manifest.desktopReview.status !== "complete" ||
-    runtime.status !== "complete" ||
-    native.status !== "complete")
-) {
-  process.stderr.write(
-    "Desktop redistribution review is incomplete. No release clearance.\n",
-  );
+if (blockingIssues.length > 0) {
+  process.stderr.write("Desktop license material check failed:\n");
+  process.stderr.write(blockingIssues.map((issue) => `- ${issue}\n`).join(""));
   process.exitCode = 1;
+} else if (process.argv.includes("--check-desktop")) {
+  process.stdout.write(
+    `Desktop license materials verified; ${declarations.size} published declarations use bundled standard terms.\n`,
+  );
 } else if (!process.argv.includes("--check")) {
   const target = join(root, "dist/web/static/third-party-notices.txt");
   await mkdir(dirname(target), { recursive: true });

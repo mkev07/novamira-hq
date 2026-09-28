@@ -38,6 +38,7 @@ export function readCrateArchive(compressed) {
 }
 
 export function isNoticePath(path) {
+  if (/\.(?:rs|c|cc|cpp|cxx|h|hh|hpp|js|ts|py)$/i.test(path)) return false;
   return /(?:^|\/)(?:licen[sc]es?|copying|notice|copyright|authors)(?:[/._-]|$)/i.test(
     path,
   );

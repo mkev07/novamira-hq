@@ -8,6 +8,7 @@ import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import test from "node:test";
+import { isNoticePath } from "../scripts/license-archive.mjs";
 
 const manifest = JSON.parse(
   await readFile(new URL("../legal/manifest.json", import.meta.url), "utf8"),
@@ -22,9 +23,10 @@ test("bundled notices include license texts, versions, source and honest desktop
     "AGPL-3.0-or-later",
     "commander — 14.0.3",
     "MPL-2.0",
-    "DESKTOP REVIEW STATUS: INCOMPLETE",
+    "DESKTOP REVIEW STATUS: MATERIALS-DOCUMENTED",
     "Corresponding Source",
     "Microsoft Corporation",
+    "Microsoft WebView2 Loader — 1.0.1150.38",
     "Runtime candidate: cssparser — 0.36.0",
     "DESKTOP RUNTIME SOURCE AUDIT — NOT RELEASE CLEARANCE",
     "third_party/glibc/LICENSE",
@@ -32,6 +34,9 @@ test("bundled notices include license texts, versions, source and honest desktop
     "THIS APPLICATION INCLUDES LGPL-COVERED SOFTWARE",
     "WRITTEN OFFER FOR CORRESPONDING SOURCE",
     "dev@novamira.ai",
+    "Standard license terms: Apache-2.0",
+    "Published author credits: 강동윤",
+    "Original source attribution",
   ])
     assert.ok(notice.includes(text), text);
   for (const file of new Set(
@@ -48,8 +53,8 @@ test("bundled notices include license texts, versions, source and honest desktop
     ["scripts/legal-notices.mjs", "--check-desktop"],
     { encoding: "utf8" },
   );
-  assert.equal(result.status, 1);
-  assert.match(result.stderr, /No release clearance/);
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /Desktop license materials verified/);
 });
 
 test("LGPL text is verbatim and the distributed offer covers relinking and retention", async () => {
@@ -73,7 +78,8 @@ test("LGPL text is verbatim and the distributed offer covers relinking and reten
   assert.ok(notices.includes(guide));
   assert.match(guide, /DENORT_BIN/);
   assert.match(guide, /V8_FROM_SOURCE=1/);
-  assert.match(guide, /not yet been executed/);
+  assert.match(guide, /macOS Apple Silicon/);
+  assert.match(guide, /HQ_LICENSE_REBUILD_20260928/);
   assert.ok(
     JSON.parse(await read("package.json")).files.includes("license-docs"),
   );
@@ -117,18 +123,59 @@ test("runtime source audit preserves every referenced original text and missing-
     inventory.packages.filter((p) => p.kind === "registry").length,
     844,
   );
-  assert.equal(
-    inventory.packages.filter((p) => p.kind === "registry" && !p.notices.length)
-      .length,
-    51,
+  assert.ok(
+    inventory.packages.find((item) => item.name === "wasite").notices.length,
   );
   for (const item of inventory.packages) {
     assert.ok(item.review);
-    for (const notice of item.notices)
+    for (const notice of item.notices) {
+      assert.ok(isNoticePath(notice.path), notice.path);
       assert.equal(
         createHash("sha256").update(texts[notice.sha256]).digest("hex"),
         notice.sha256,
       );
+    }
+  }
+});
+
+test("runtime target evidence stays consistent with the reviewed lock and notice inventory", async () => {
+  const read = async (name) =>
+    JSON.parse(
+      await readFile(new URL(`../legal/${name}`, import.meta.url), "utf8"),
+    );
+  const inventory = await read("denort-inventory.json");
+  const report = await read("runtime-targets.json");
+  assert.equal(report.lockSha256, inventory.lockSha256);
+  assert.equal(report.denoVersion, inventory.denoVersion);
+  assert.deepEqual(
+    Object.values(report.targets)
+      .map((target) => target.triple)
+      .sort(),
+    [
+      "aarch64-apple-darwin",
+      "x86_64-apple-darwin",
+      "x86_64-pc-windows-msvc",
+      "x86_64-unknown-linux-gnu",
+    ],
+  );
+  const packages = new Map(
+    inventory.packages.map((item) => [`${item.name}@${item.version}`, item]),
+  );
+  for (const target of Object.values(report.targets)) {
+    const ids = [...report.commonPackages, ...target.additionalPackages];
+    assert.equal(new Set(ids).size, target.packageCount);
+    assert.equal(ids.length, target.packageCount);
+    for (const id of ids) assert.ok(packages.has(id), id);
+    assert.deepEqual(
+      target.packagesWithoutCollectedNotices,
+      ids
+        .filter(
+          (id) =>
+            packages.get(id).kind === "registry" &&
+            packages.get(id).notices.length === 0,
+        )
+        .sort(),
+    );
   }
 });
 
@@ -137,6 +184,8 @@ test("offline notice generation rejects asset drift and missing license text", a
   t.after(() => rm(root, { recursive: true, force: true }));
   const paths = [
     "scripts/legal-notices.mjs",
+    "scripts/windows-native.mjs",
+    "scripts/runtime-license-evidence.mjs",
     "legal",
     "license-docs",
     "LICENSE",
@@ -154,17 +203,95 @@ test("offline notice generation rejects asset drift and missing license text", a
       recursive: true,
     });
   }
-  const run = () =>
-    spawnSync(process.execPath, [join(root, "scripts/legal-notices.mjs")], {
-      encoding: "utf8",
-      cwd: tmpdir(),
-    });
+  const run = (...args) =>
+    spawnSync(
+      process.execPath,
+      [join(root, "scripts/legal-notices.mjs"), ...args],
+      {
+        encoding: "utf8",
+        cwd: tmpdir(),
+      },
+    );
   assert.equal(run().status, 0);
   const asset = Object.keys(manifest.assetDigests)[0];
   const original = await readFile(join(root, asset));
   await writeFile(join(root, asset), "changed asset");
   assert.match(run().stderr, /Legal inventory needs review: asset changed/);
   await writeFile(join(root, asset), original);
+  const manifestPath = join(root, "legal/manifest.json");
+  const originalManifest = await readFile(manifestPath, "utf8");
+  const changed = JSON.parse(originalManifest);
+  changed.components.find(
+    (item) => item.id === "webview2-loader",
+  ).artifact.sha256 = "0".repeat(64);
+  await writeFile(manifestPath, JSON.stringify(changed));
+  assert.match(
+    run().stderr,
+    /Legal inventory needs review: Windows WebView2 loader/,
+  );
+  await writeFile(manifestPath, originalManifest);
+  // Historical audit-completeness flags do not substitute for evidence checks.
+  for (const file of [
+    "manifest.json",
+    "denort-inventory.json",
+    "v8-source-notices.json",
+  ]) {
+    const path = join(root, "legal", file);
+    const value = JSON.parse(await readFile(path, "utf8"));
+    if (file === "manifest.json") value.desktopReview.status = "incomplete";
+    else value.status = "incomplete";
+    await writeFile(path, JSON.stringify(value));
+  }
+  assert.equal(run("--check-desktop").status, 0);
+  const evidencePath = join(root, "legal/runtime-license-evidence.json");
+  const evidenceOriginal = await readFile(evidencePath, "utf8");
+  const evidence = JSON.parse(evidenceOriginal);
+  evidence.packages.shift();
+  await writeFile(evidencePath, JSON.stringify(evidence));
+  const missing = run("--check-desktop");
+  assert.equal(missing.status, 1);
+  assert.match(missing.stderr, /Missing license evidence/);
+  const conflict = JSON.parse(evidenceOriginal);
+  conflict.packages[0].selectedLicense = "Apache-2.0";
+  await writeFile(evidencePath, JSON.stringify(conflict));
+  assert.match(
+    run("--check-desktop").stderr,
+    /Unreviewed or conflicting license selection/,
+  );
+  const drift = JSON.parse(evidenceOriginal);
+  drift.packages[0].archiveSha256 = "0".repeat(64);
+  await writeFile(evidencePath, JSON.stringify(drift));
+  assert.match(
+    run("--check-desktop").stderr,
+    /Changed license declaration or archive/,
+  );
+  await writeFile(evidencePath, evidenceOriginal);
+  const runtimePath = join(root, "legal/denort-inventory.json");
+  const runtimeOriginal = await readFile(runtimePath, "utf8");
+  const unknown = JSON.parse(runtimeOriginal);
+  unknown.packages.find((item) => item.notices.length > 0).license =
+    "LicenseRef-Unknown";
+  await writeFile(runtimePath, JSON.stringify(unknown));
+  assert.match(
+    run("--check-desktop").stderr,
+    /Missing or unreviewed license declaration/,
+  );
+  await writeFile(runtimePath, runtimeOriginal);
+  const termsPath = join(root, "legal/licenses/mit-terms.txt");
+  const terms = await readFile(termsPath, "utf8");
+  await writeFile(termsPath, "missing terms");
+  assert.match(
+    run("--check-desktop").stderr,
+    /Missing or changed standard license text/,
+  );
+  await writeFile(termsPath, terms);
+  const blocked = JSON.parse(await readFile(manifestPath, "utf8"));
+  blocked.desktopReview.blockers = [
+    "Required attribution for an embedded component is missing",
+  ];
+  await writeFile(manifestPath, JSON.stringify(blocked));
+  assert.match(run("--check-desktop").stderr, /Required attribution/);
+  await writeFile(manifestPath, originalManifest);
   await rm(join(root, "legal/licenses/commander.txt"));
   assert.notEqual(run().status, 0);
 });

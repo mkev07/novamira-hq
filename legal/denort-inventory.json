@@ -103,7 +103,7 @@
         "path_in_vcs": ""
       },
       "notices": [],
-      "review": "No standalone license text found in published archive"
+      "review": "Published archive license declaration documented in runtime-license-evidence.json; standard terms and observed attribution are bundled. No standalone upstream notice file was collected; that fact alone is not a distribution blocker."
     },
     {
       "name": "aead",
@@ -637,7 +637,7 @@
       },
       "repository": "https://github.com/swc-project/swc.git",
       "notices": [],
-      "review": "No standalone license text found in published archive"
+      "review": "Published archive license declaration documented in runtime-license-evidence.json; standard terms and observed attribution are bundled. No standalone upstream notice file was collected; that fact alone is not a distribution blocker."
     },
     {
       "name": "async-compression",
@@ -1057,7 +1057,7 @@
       },
       "repository": "https://github.com/swc-project/swc.git",
       "notices": [],
-      "review": "No standalone license text found in published archive"
+      "review": "Published archive license declaration documented in runtime-license-evidence.json; standard terms and observed attribution are bundled. No standalone upstream notice file was collected; that fact alone is not a distribution blocker."
     },
     {
       "name": "bincode",
@@ -2599,8 +2599,14 @@
         },
         "path_in_vcs": "cranelift/assembler-x64/meta"
       },
-      "notices": [],
-      "review": "No standalone license text found in published archive"
+      "notices": [
+        {
+          "path": "upstream-root/LICENSE",
+          "source": "https://raw.githubusercontent.com/bytecodealliance/wasmtime/398694a59e24d37acde915086a9be308ec51f626/LICENSE",
+          "sha256": "268872b9816f90fd8e85db5a28d33f8150ebb8dd016653fb39ef1f94f2686bc5"
+        }
+      ],
+      "review": "Workspace-root notices reused from cranelift-bitset at the identical recorded Git revision; per-directory exceptions and binary inclusion still need review."
     },
     {
       "name": "cranelift-assembler-x64",
@@ -2615,8 +2621,14 @@
         },
         "path_in_vcs": "cranelift/assembler-x64"
       },
-      "notices": [],
-      "review": "No standalone license text found in published archive"
+      "notices": [
+        {
+          "path": "upstream-root/LICENSE",
+          "source": "https://raw.githubusercontent.com/bytecodealliance/wasmtime/398694a59e24d37acde915086a9be308ec51f626/LICENSE",
+          "sha256": "268872b9816f90fd8e85db5a28d33f8150ebb8dd016653fb39ef1f94f2686bc5"
+        }
+      ],
+      "review": "Workspace-root notices reused from cranelift-bitset at the identical recorded Git revision; per-directory exceptions and binary inclusion still need review."
     },
     {
       "name": "cranelift-bforest",
@@ -3482,7 +3494,7 @@
       },
       "repository": "https://github.com/denoland/deno_core_icudata",
       "notices": [],
-      "review": "No standalone license text found in published archive"
+      "review": "Published archive license declaration documented in runtime-license-evidence.json; standard terms and observed attribution are bundled. No standalone upstream notice file was collected; that fact alone is not a distribution blocker."
     },
     {
       "name": "deno_core",
@@ -3799,7 +3811,7 @@
       },
       "repository": "https://github.com/denoland/deno_native_certs",
       "notices": [],
-      "review": "No standalone license text found in published archive"
+      "review": "Published archive license declaration documented in runtime-license-evidence.json; standard terms and observed attribution are bundled. No standalone upstream notice file was collected; that fact alone is not a distribution blocker."
     },
     {
       "name": "deno_net",
@@ -4062,7 +4074,7 @@
       },
       "repository": "https://github.com/denoland/deno_tunnel",
       "notices": [],
-      "review": "No standalone license text found in published archive"
+      "review": "Published archive license declaration documented in runtime-license-evidence.json; standard terms and observed attribution are bundled. No standalone upstream notice file was collected; that fact alone is not a distribution blocker."
     },
     {
       "name": "deno_unsync",
@@ -4419,7 +4431,7 @@
       },
       "repository": "https://github.com/mmastrac/derive-io",
       "notices": [],
-      "review": "No standalone license text found in published archive"
+      "review": "Published archive license declaration documented in runtime-license-evidence.json; standard terms and observed attribution are bundled. No standalone upstream notice file was collected; that fact alone is not a distribution blocker."
     },
     {
       "name": "derive-io",
@@ -4436,7 +4448,7 @@
       },
       "repository": "https://github.com/mmastrac/derive-io",
       "notices": [],
-      "review": "No standalone license text found in published archive"
+      "review": "Published archive license declaration documented in runtime-license-evidence.json; standard terms and observed attribution are bundled. No standalone upstream notice file was collected; that fact alone is not a distribution blocker."
     },
     {
       "name": "des",
@@ -4704,8 +4716,14 @@
         },
         "path_in_vcs": "dlopen2-derive"
       },
-      "notices": [],
-      "review": "No standalone license text found in published archive"
+      "notices": [
+        {
+          "path": "upstream-root/LICENSE",
+          "source": "https://github.com/OpenByteDev/dlopen2/blob/122b5b7d9f15718de9525b5968ea8888ddc3a89d/LICENSE",
+          "sha256": "39fa265207450e77c62e90c5594a06c085b655d8374c7ced4bf7894b6bd95dd2"
+        }
+      ],
+      "review": "Workspace-root notices recovered via Git at the published crate revision; repository identified from the package README or associated crate. Per-directory exceptions and binary inclusion still need review."
     },
     {
       "name": "dlopen2",
@@ -4716,7 +4734,7 @@
       "kind": "registry",
       "repository": "https://github.com/OpenByteDev/dlopen2",
       "notices": [],
-      "review": "No standalone license text found in published archive"
+      "review": "Published archive license declaration documented in runtime-license-evidence.json; standard terms and observed attribution are bundled. No standalone upstream notice file was collected; that fact alone is not a distribution blocker."
     },
     {
       "name": "document-features",
@@ -5962,7 +5980,7 @@
       },
       "repository": "https://github.com/Orange-OpenSource/fqdn",
       "notices": [],
-      "review": "No standalone license text found in published archive"
+      "review": "Published archive license declaration documented in runtime-license-evidence.json; standard terms and observed attribution are bundled. No standalone upstream notice file was collected; that fact alone is not a distribution blocker."
     },
     {
       "name": "from_variant",
@@ -5979,7 +5997,7 @@
       },
       "repository": "https://github.com/swc-project/swc.git",
       "notices": [],
-      "review": "No standalone license text found in published archive"
+      "review": "Published archive license declaration documented in runtime-license-evidence.json; standard terms and observed attribution are bundled. No standalone upstream notice file was collected; that fact alone is not a distribution blocker."
     },
     {
       "name": "fs_extra",
@@ -7155,7 +7173,7 @@
       },
       "repository": "https://github.com/lifthrasiir/hexf",
       "notices": [],
-      "review": "No standalone license text found in published archive"
+      "review": "Published archive license declaration documented in runtime-license-evidence.json; standard terms and observed attribution are bundled. No standalone upstream notice file was collected; that fact alone is not a distribution blocker."
     },
     {
       "name": "hickory-proto",
@@ -9010,8 +9028,14 @@
         },
         "path_in_vcs": "src/proc_macros"
       },
-      "notices": [],
-      "review": "No standalone license text found in published archive"
+      "notices": [
+        {
+          "path": "same-revision-lazy-regex/LICENSE",
+          "sha256": "89461664ce2aee7d80ea8fba7118fe7abd490d76ba435cf1d81d3128e060711f",
+          "source": "https://static.crates.io/crates/lazy-regex/lazy-regex-3.1.0.crate"
+        }
+      ],
+      "review": "License text collected from the checksum-verified lazy-regex archive at the identical Git revision; workspace coverage and binary inclusion still need review."
     },
     {
       "name": "lazy-regex",
@@ -10666,15 +10690,12 @@
       "repository": "https://github.com/madsmtm/objc2",
       "notices": [
         {
-          "path": "src/copying.rs",
-          "sha256": "259b22f571b54fed25f68ec5abd8eda223e7b0547a806f13ba797a0eabecd64f"
-        },
-        {
-          "path": "src/tests/copying.rs",
-          "sha256": "23d608079a47693a26dfc8a5cb01894ad0136a50714d46221d9380aa4a4b4423"
+          "path": "upstream-root/LICENSE.md",
+          "source": "https://raw.githubusercontent.com/madsmtm/objc2/7b1abfd750a2cacaea71d6a56ecfb83cb7de560b/LICENSE.md",
+          "sha256": "7f976f7e9cb2d87df7230606feb932c3f21ac0e664045a775b600046ff850c54"
         }
       ],
-      "review": "Archive notices collected; binary inclusion and nested source coverage need review."
+      "review": "Workspace-root notices reused from objc2-core-foundation at the identical recorded Git revision; per-directory exceptions and binary inclusion still need review."
     },
     {
       "name": "objc2-metal",
@@ -13429,7 +13450,7 @@
         "path_in_vcs": "crates/rsqlite-vfs"
       },
       "notices": [],
-      "review": "No standalone license text found in published archive"
+      "review": "Published archive license declaration documented in runtime-license-evidence.json; standard terms and observed attribution are bundled. No standalone upstream notice file was collected; that fact alone is not a distribution blocker."
     },
     {
       "name": "rusqlite",
@@ -13814,7 +13835,7 @@
       },
       "repository": "https://github.com/denoland/rustls-tokio-stream",
       "notices": [],
-      "review": "No standalone license text found in published archive"
+      "review": "Published archive license declaration documented in runtime-license-evidence.json; standard terms and observed attribution are bundled. No standalone upstream notice file was collected; that fact alone is not a distribution blocker."
     },
     {
       "name": "rustls-webpki",
@@ -14008,7 +14029,7 @@
       },
       "repository": "https://github.com/fasterthanlime/stringsearch",
       "notices": [],
-      "review": "No standalone license text found in published archive"
+      "review": "Published archive license declaration documented in runtime-license-evidence.json; standard terms and observed attribution are bundled. No standalone upstream notice file was collected; that fact alone is not a distribution blocker."
     },
     {
       "name": "safe_arch",
@@ -15204,7 +15225,7 @@
       },
       "repository": "https://github.com/Gankra/sptr",
       "notices": [],
-      "review": "No standalone license text found in published archive"
+      "review": "Published archive license declaration documented in runtime-license-evidence.json; standard terms and observed attribution are bundled. No standalone upstream notice file was collected; that fact alone is not a distribution blocker."
     },
     {
       "name": "sqlite-wasm-rs",
@@ -15341,7 +15362,7 @@
       },
       "repository": "https://github.com/swc-project/swc.git",
       "notices": [],
-      "review": "No standalone license text found in published archive"
+      "review": "Published archive license declaration documented in runtime-license-evidence.json; standard terms and observed attribution are bundled. No standalone upstream notice file was collected; that fact alone is not a distribution blocker."
     },
     {
       "name": "stringcase",
@@ -15467,7 +15488,7 @@
       },
       "repository": "https://github.com/swc-project/swc.git",
       "notices": [],
-      "review": "No standalone license text found in published archive"
+      "review": "Published archive license declaration documented in runtime-license-evidence.json; standard terms and observed attribution are bundled. No standalone upstream notice file was collected; that fact alone is not a distribution blocker."
     },
     {
       "name": "swc_atoms",
@@ -15484,7 +15505,7 @@
       },
       "repository": "https://github.com/swc-project/swc.git",
       "notices": [],
-      "review": "No standalone license text found in published archive"
+      "review": "Published archive license declaration documented in runtime-license-evidence.json; standard terms and observed attribution are bundled. No standalone upstream notice file was collected; that fact alone is not a distribution blocker."
     },
     {
       "name": "swc_common",
@@ -15501,7 +15522,7 @@
       },
       "repository": "https://github.com/swc-project/swc.git",
       "notices": [],
-      "review": "No standalone license text found in published archive"
+      "review": "Published archive license declaration documented in runtime-license-evidence.json; standard terms and observed attribution are bundled. No standalone upstream notice file was collected; that fact alone is not a distribution blocker."
     },
     {
       "name": "swc_config_macro",
@@ -15518,7 +15539,7 @@
       },
       "repository": "https://github.com/swc-project/swc.git",
       "notices": [],
-      "review": "No standalone license text found in published archive"
+      "review": "Published archive license declaration documented in runtime-license-evidence.json; standard terms and observed attribution are bundled. No standalone upstream notice file was collected; that fact alone is not a distribution blocker."
     },
     {
       "name": "swc_config",
@@ -15535,7 +15556,7 @@
       },
       "repository": "https://github.com/swc-project/swc.git",
       "notices": [],
-      "review": "No standalone license text found in published archive"
+      "review": "Published archive license declaration documented in runtime-license-evidence.json; standard terms and observed attribution are bundled. No standalone upstream notice file was collected; that fact alone is not a distribution blocker."
     },
     {
       "name": "swc_ecma_ast",
@@ -15552,7 +15573,7 @@
       },
       "repository": "https://github.com/swc-project/swc.git",
       "notices": [],
-      "review": "No standalone license text found in published archive"
+      "review": "Published archive license declaration documented in runtime-license-evidence.json; standard terms and observed attribution are bundled. No standalone upstream notice file was collected; that fact alone is not a distribution blocker."
     },
     {
       "name": "swc_ecma_codegen_macros",
@@ -15569,7 +15590,7 @@
       },
       "repository": "https://github.com/swc-project/swc.git",
       "notices": [],
-      "review": "No standalone license text found in published archive"
+      "review": "Published archive license declaration documented in runtime-license-evidence.json; standard terms and observed attribution are bundled. No standalone upstream notice file was collected; that fact alone is not a distribution blocker."
     },
     {
       "name": "swc_ecma_codegen",
@@ -15586,7 +15607,7 @@
       },
       "repository": "https://github.com/swc-project/swc.git",
       "notices": [],
-      "review": "No standalone license text found in published archive"
+      "review": "Published archive license declaration documented in runtime-license-evidence.json; standard terms and observed attribution are bundled. No standalone upstream notice file was collected; that fact alone is not a distribution blocker."
     },
     {
       "name": "swc_ecma_lexer",
@@ -15603,7 +15624,7 @@
       },
       "repository": "https://github.com/swc-project/swc.git",
       "notices": [],
-      "review": "No standalone license text found in published archive"
+      "review": "Published archive license declaration documented in runtime-license-evidence.json; standard terms and observed attribution are bundled. No standalone upstream notice file was collected; that fact alone is not a distribution blocker."
     },
     {
       "name": "swc_ecma_loader",
@@ -15620,7 +15641,7 @@
       },
       "repository": "https://github.com/swc-project/swc.git",
       "notices": [],
-      "review": "No standalone license text found in published archive"
+      "review": "Published archive license declaration documented in runtime-license-evidence.json; standard terms and observed attribution are bundled. No standalone upstream notice file was collected; that fact alone is not a distribution blocker."
     },
     {
       "name": "swc_ecma_parser",
@@ -15637,7 +15658,7 @@
       },
       "repository": "https://github.com/swc-project/swc.git",
       "notices": [],
-      "review": "No standalone license text found in published archive"
+      "review": "Published archive license declaration documented in runtime-license-evidence.json; standard terms and observed attribution are bundled. No standalone upstream notice file was collected; that fact alone is not a distribution blocker."
     },
     {
       "name": "swc_ecma_transforms_base",
@@ -15654,7 +15675,7 @@
       },
       "repository": "https://github.com/swc-project/swc.git",
       "notices": [],
-      "review": "No standalone license text found in published archive"
+      "review": "Published archive license declaration documented in runtime-license-evidence.json; standard terms and observed attribution are bundled. No standalone upstream notice file was collected; that fact alone is not a distribution blocker."
     },
     {
       "name": "swc_ecma_transforms_classes",
@@ -15671,7 +15692,7 @@
       },
       "repository": "https://github.com/swc-project/swc.git",
       "notices": [],
-      "review": "No standalone license text found in published archive"
+      "review": "Published archive license declaration documented in runtime-license-evidence.json; standard terms and observed attribution are bundled. No standalone upstream notice file was collected; that fact alone is not a distribution blocker."
     },
     {
       "name": "swc_ecma_transforms_macros",
@@ -15688,7 +15709,7 @@
       },
       "repository": "https://github.com/swc-project/swc.git",
       "notices": [],
-      "review": "No standalone license text found in published archive"
+      "review": "Published archive license declaration documented in runtime-license-evidence.json; standard terms and observed attribution are bundled. No standalone upstream notice file was collected; that fact alone is not a distribution blocker."
     },
     {
       "name": "swc_ecma_transforms_proposal",
@@ -15705,7 +15726,7 @@
       },
       "repository": "https://github.com/swc-project/swc.git",
       "notices": [],
-      "review": "No standalone license text found in published archive"
+      "review": "Published archive license declaration documented in runtime-license-evidence.json; standard terms and observed attribution are bundled. No standalone upstream notice file was collected; that fact alone is not a distribution blocker."
     },
     {
       "name": "swc_ecma_transforms_react",
@@ -15722,7 +15743,7 @@
       },
       "repository": "https://github.com/swc-project/swc.git",
       "notices": [],
-      "review": "No standalone license text found in published archive"
+      "review": "Published archive license declaration documented in runtime-license-evidence.json; standard terms and observed attribution are bundled. No standalone upstream notice file was collected; that fact alone is not a distribution blocker."
     },
     {
       "name": "swc_ecma_transforms_typescript",
@@ -15739,7 +15760,7 @@
       },
       "repository": "https://github.com/swc-project/swc.git",
       "notices": [],
-      "review": "No standalone license text found in published archive"
+      "review": "Published archive license declaration documented in runtime-license-evidence.json; standard terms and observed attribution are bundled. No standalone upstream notice file was collected; that fact alone is not a distribution blocker."
     },
     {
       "name": "swc_ecma_utils",
@@ -15756,7 +15777,7 @@
       },
       "repository": "https://github.com/swc-project/swc.git",
       "notices": [],
-      "review": "No standalone license text found in published archive"
+      "review": "Published archive license declaration documented in runtime-license-evidence.json; standard terms and observed attribution are bundled. No standalone upstream notice file was collected; that fact alone is not a distribution blocker."
     },
     {
       "name": "swc_ecma_visit",
@@ -15773,7 +15794,7 @@
       },
       "repository": "https://github.com/swc-project/swc.git",
       "notices": [],
-      "review": "No standalone license text found in published archive"
+      "review": "Published archive license declaration documented in runtime-license-evidence.json; standard terms and observed attribution are bundled. No standalone upstream notice file was collected; that fact alone is not a distribution blocker."
     },
     {
       "name": "swc_eq_ignore_macros",
@@ -15790,7 +15811,7 @@
       },
       "repository": "https://github.com/swc-project/swc.git",
       "notices": [],
-      "review": "No standalone license text found in published archive"
+      "review": "Published archive license declaration documented in runtime-license-evidence.json; standard terms and observed attribution are bundled. No standalone upstream notice file was collected; that fact alone is not a distribution blocker."
     },
     {
       "name": "swc_macros_common",
@@ -15807,7 +15828,7 @@
       },
       "repository": "https://github.com/swc-project/swc.git",
       "notices": [],
-      "review": "No standalone license text found in published archive"
+      "review": "Published archive license declaration documented in runtime-license-evidence.json; standard terms and observed attribution are bundled. No standalone upstream notice file was collected; that fact alone is not a distribution blocker."
     },
     {
       "name": "swc_sourcemap",
@@ -15846,7 +15867,7 @@
       },
       "repository": "https://github.com/swc-project/swc.git",
       "notices": [],
-      "review": "No standalone license text found in published archive"
+      "review": "Published archive license declaration documented in runtime-license-evidence.json; standard terms and observed attribution are bundled. No standalone upstream notice file was collected; that fact alone is not a distribution blocker."
     },
     {
       "name": "swc_visit",
@@ -15863,7 +15884,7 @@
       },
       "repository": "https://github.com/swc-project/swc.git",
       "notices": [],
-      "review": "No standalone license text found in published archive"
+      "review": "Published archive license declaration documented in runtime-license-evidence.json; standard terms and observed attribution are bundled. No standalone upstream notice file was collected; that fact alone is not a distribution blocker."
     },
     {
       "name": "syn-match",
@@ -16021,7 +16042,7 @@
       },
       "repository": "https://github.com/dsherret/sys_traits",
       "notices": [],
-      "review": "No standalone license text found in published archive"
+      "review": "Published archive license declaration documented in runtime-license-evidence.json; standard terms and observed attribution are bundled. No standalone upstream notice file was collected; that fact alone is not a distribution blocker."
     },
     {
       "name": "sys_traits",
@@ -16038,7 +16059,7 @@
       },
       "repository": "https://github.com/dsherret/sys_traits",
       "notices": [],
-      "review": "No standalone license text found in published archive"
+      "review": "Published archive license declaration documented in runtime-license-evidence.json; standard terms and observed attribution are bundled. No standalone upstream notice file was collected; that fact alone is not a distribution blocker."
     },
     {
       "name": "tagptr",
@@ -17740,14 +17761,6 @@
         {
           "path": "third_party/highway/src/debian/copyright",
           "sha256": "6e4ecf1cae052b678ea3178dd4b3652d581ee66a82d58db8800dd7d80dd6de76"
-        },
-        {
-          "path": "v8/src/compiler/turboshaft/copying-phase.cc",
-          "sha256": "8050804c21e9547da764741ae0aa9b8a3fb8df1f7a24c8ba5f94e7fa7e3564d9"
-        },
-        {
-          "path": "v8/src/compiler/turboshaft/copying-phase.h",
-          "sha256": "d8545a0b06a374e1465c08ba15318a4385e9e603f96066e6f901af7f7a6c754b"
         }
       ],
       "review": "Archive notices collected; binary inclusion and nested source coverage need review."
@@ -17848,7 +17861,7 @@
       "kind": "registry",
       "repository": "https://github.com/tokio-rs/valuable",
       "notices": [],
-      "review": "No standalone license text found in published archive"
+      "review": "Published archive license declaration documented in runtime-license-evidence.json; standard terms and observed attribution are bundled. No standalone upstream notice file was collected; that fact alone is not a distribution blocker."
     },
     {
       "name": "vcpkg",
@@ -18149,8 +18162,24 @@
         }
       },
       "repository": "https://github.com/ardaku/wasite",
-      "notices": [],
-      "review": "No standalone license text found in published archive"
+      "notices": [
+        {
+          "path": "upstream-root/LICENSE_APACHE_2_0.txt",
+          "source": "https://github.com/ardaku/wasite/blob/0c72934ad329ab4670eb017581640c2d6eceb289/LICENSE_APACHE_2_0.txt",
+          "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+        },
+        {
+          "path": "upstream-root/LICENSE_BOOST_1_0.txt",
+          "source": "https://github.com/ardaku/wasite/blob/0c72934ad329ab4670eb017581640c2d6eceb289/LICENSE_BOOST_1_0.txt",
+          "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+        },
+        {
+          "path": "upstream-root/LICENSE_MIT.txt",
+          "source": "https://github.com/ardaku/wasite/blob/0c72934ad329ab4670eb017581640c2d6eceb289/LICENSE_MIT.txt",
+          "sha256": "508a77d2e7b51d98adeed32648ad124b7b30241a8e70b2e72c99f92d8e5874d1"
+        }
+      ],
+      "review": "Workspace-root notices recovered via Git at the published crate revision; nested source coverage and binary inclusion still need review."
     },
     {
       "name": "wasm_dep_analyzer",
@@ -18322,15 +18351,17 @@
       "repository": "https://github.com/bytecodealliance/wasm-tools/tree/main/crates/wasm-metadata",
       "notices": [
         {
-          "path": "src/oci_annotations/authors.rs",
-          "sha256": "241d116ecc7ec20e3c67cb8e9edb00ef98feab4af4a87f4f00b1f21bc3e8d1f2"
+          "path": "upstream-root/LICENSE-MIT",
+          "source": "https://raw.githubusercontent.com/bytecodealliance/wasm-tools/d4e317f22c3bace76cb3205003bcc34b4929037d/LICENSE-MIT",
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
         },
         {
-          "path": "src/oci_annotations/licenses.rs",
-          "sha256": "2c8aca896e6e398329499ccb47c43947ab89e6cd4bd6a2739fad80118df45881"
+          "path": "upstream-root/LICENSE-APACHE",
+          "source": "https://raw.githubusercontent.com/bytecodealliance/wasm-tools/d4e317f22c3bace76cb3205003bcc34b4929037d/LICENSE-APACHE",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
         }
       ],
-      "review": "Archive notices collected; binary inclusion and nested source coverage need review."
+      "review": "Workspace-root notices reused from wasm-encoder at the identical recorded Git revision; per-directory exceptions and binary inclusion still need review."
     },
     {
       "name": "wasmparser",
@@ -18849,7 +18880,7 @@
       "kind": "registry",
       "repository": "https://github.com/retep998/winapi-rs",
       "notices": [],
-      "review": "No standalone license text found in published archive"
+      "review": "Published archive license declaration documented in runtime-license-evidence.json; standard terms and observed attribution are bundled. No standalone upstream notice file was collected; that fact alone is not a distribution blocker."
     },
     {
       "name": "winapi-util",
@@ -18886,7 +18917,7 @@
       "kind": "registry",
       "repository": "https://github.com/retep998/winapi-rs",
       "notices": [],
-      "review": "No standalone license text found in published archive"
+      "review": "Published archive license declaration documented in runtime-license-evidence.json; standard terms and observed attribution are bundled. No standalone upstream notice file was collected; that fact alone is not a distribution blocker."
     },
     {
       "name": "winapi",
@@ -21298,8 +21329,19 @@
         },
         "path_in_vcs": "crates/zune-core"
       },
-      "notices": [],
-      "review": "No standalone license text found in published archive"
+      "notices": [
+        {
+          "path": "upstream-root/LICENSE-ZLIB",
+          "source": "https://github.com/etemesi254/zune-image/blob/f8fbb123d5ed04441e8324a555bfcda0cb1bd28f/LICENSE-ZLIB",
+          "sha256": "7fa429541e55b1509909e058f2d21a37467e4958ec713b357f6e0cf9dc4ee352"
+        },
+        {
+          "path": "upstream-root/LICENSE.md",
+          "source": "https://github.com/etemesi254/zune-image/blob/f8fbb123d5ed04441e8324a555bfcda0cb1bd28f/LICENSE.md",
+          "sha256": "c6dff146a9f31848ac296faa5a08a4253caf2c384c86f906dc99e7fc0a39cc8c"
+        }
+      ],
+      "review": "Workspace-root notices recovered via Git at the published crate revision; repository identified from the package README or associated crate. Per-directory exceptions and binary inclusion still need review."
     },
     {
       "name": "zune-jpeg",
