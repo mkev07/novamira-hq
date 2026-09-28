@@ -234,6 +234,7 @@ export function emptyConfigDocument(): ConfigDocument {
   };
 }
 
+const HOSTING_NAME_PATTERN = /^[\p{L}\p{N}][\p{L}\p{N}\p{M}._-]*$/u;
 const NAME_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/;
 const ENV_NAME_PATTERN = /^[A-Za-z_][A-Za-z0-9_]*$/;
 
@@ -336,13 +337,17 @@ function optionalBoolean(
 
 /** Names double as map keys, lock keys, and keychain account components. */
 export function validateProfileName(name: string): string {
-  if (!NAME_PATTERN.test(name)) {
+  const normalized = name.normalize("NFC");
+  if (
+    !HOSTING_NAME_PATTERN.test(normalized) ||
+    Array.from(normalized).length > 64
+  ) {
     throw new CliError(
       "usage_error",
-      "Hosting profile name must use 1-64 letters, numbers, dots, dashes, or underscores.",
+      "Account name must use 1-64 letters (including accents), numbers, dots, dashes, or underscores.",
     );
   }
-  return name;
+  return normalized;
 }
 
 export function validateSavedPushName(name: string): string {
@@ -543,7 +548,8 @@ function parseRecordOf<T>(
   const record = requireRecord(value, path);
   const parsed = emptyNameMap<T>();
   for (const [key, entry] of Object.entries(record)) {
-    validateKey(key);
+    if (validateKey(key) !== key)
+      throw schemaError(`${path}.${key}`, "must use normalized characters.");
     parsed[key] = parseEntry(entry, `${path}.${key}`, key);
   }
   return parsed;

@@ -223,8 +223,8 @@ interface CacheEntry {
 /**
  * `includeEnvs` and the profile name, joined by a NUL.
  *
- * A profile name matches `[A-Za-z0-9][A-Za-z0-9._-]{0,63}` and so can never
- * contain a NUL, which makes the encoding injective — `("a", true)` and
+ * A validated profile name can never contain a NUL, which makes the encoding
+ * injective — `("a", true)` and
  * `("a\01", false)` cannot collide the way a `:` separator would allow.
  *
  * The separator is written `\u0000` rather than as a raw byte. A literal NUL

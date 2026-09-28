@@ -29,6 +29,7 @@ import {
   parseCredentialRef,
   serializeConfigDocument,
   storedCredential,
+  validateProfileName,
 } from "../dist/config/schema.js";
 
 // Never a real-looking secret: every credential here is a *reference*, which is
@@ -118,6 +119,53 @@ test("a version-1 document round-trips through serialize and parse", () => {
     credentialSource(storedCredential(STORED_ID)),
     `stored:${STORED_ID}`,
   );
+});
+
+test("hosting account names accept accents and use one NFC key", async () => {
+  const composed = "Città";
+  const decomposed = "Citta\u0300";
+  assert.equal(validateProfileName(decomposed), composed);
+  for (const invalid of ["-Città", "Città test", "😀", "a".repeat(65)])
+    assert.throws(() => validateProfileName(invalid), { code: "usage_error" });
+  assert.throws(
+    () =>
+      parseConfigDocument({
+        version: 1,
+        hostingProfiles: {
+          [decomposed]: DOCUMENT.hostingProfiles.production,
+        },
+        pushes: {},
+      }),
+    { code: "schema_validation_failed" },
+  );
+
+  const state = await isolatedConfig();
+  try {
+    await state.store.upsertHostingProfile(
+      decomposed,
+      DOCUMENT.hostingProfiles.production,
+    );
+    assert.deepEqual(
+      (await state.store.listHostingProfiles()).map(({ name }) => name),
+      [composed],
+    );
+    assert.equal(
+      (await state.store.selectHostingProfile(decomposed)).name,
+      composed,
+    );
+    assert.equal(
+      (await state.store.requireHostingProfile(decomposed)).name,
+      composed,
+    );
+    assert.deepEqual(
+      await state.store.getHostingProfile(decomposed),
+      DOCUMENT.hostingProfiles.production,
+    );
+    await state.store.removeHostingProfile(decomposed);
+    assert.deepEqual(await state.store.listHostingProfiles(), []);
+  } finally {
+    await rm(state.root, { recursive: true, force: true });
+  }
 });
 
 test("only version 1 exists and structural damage is refused", () => {

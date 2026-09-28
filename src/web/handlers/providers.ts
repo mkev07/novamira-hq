@@ -48,9 +48,11 @@ import type { RouteContext, RouteHandler } from "../routes.js";
 import {
   defaultDashboardSignals,
   defaultProviderFormSignals,
+  dynamicSignalPath,
 } from "../signals.js";
 import { parseProviderForm } from "../signals-input.js";
 import type { SseStream } from "../sse.js";
+import { renderProviderFlash } from "../views/providers.js";
 import type { DashboardNotice } from "../views/types.js";
 import type { ProviderReadyView } from "../views/provider-ready.js";
 
@@ -226,10 +228,16 @@ export function createProviderSaveHandler(context: RouteContext): RouteHandler {
           path: "/_dashboard/providers/save",
           code: cliError.code,
         });
-        // No signal patch on the failure path: the operator's typed values stay
-        // in the form so a name collision or a validation failure can be fixed
-        // without retyping the credential.
-        await patchProvidersPage(context, stream, danger(cliError.message));
+        // Keep the live form and its values. Repainting it while Datastar's
+        // submit indicator is active can leave Save disabled after the user
+        // corrects an invalid account name.
+        stream.patchSignals({
+          [dynamicSignalPath("providerSaving", "account")]: false,
+        });
+        stream.patchElements(renderProviderFlash(danger(cliError.message)), {
+          selectorId: "provider-flash",
+          mode: "outer",
+        });
       }
       stream.close();
     },

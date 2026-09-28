@@ -441,7 +441,7 @@ export function renderProviderForm(open: boolean): Html {
     "profile",
   )} type="text"${ds.bind("providerForm.profile")}${ds.attrs({
     placeholder: selectedProviderProfilePlaceholder(),
-  })} required><small class="field-help">A local name used to identify this hosting account in Novamira HQ.</small></label><label><span>Credential</span><input${idAttr(
+  })} required><small class="field-help">A local name used to identify this hosting account in Novamira HQ. Accented letters are supported.</small></label><label><span>Credential</span><input${idAttr(
     "credential-value",
   )} type="password"${ds.bind(
     "providerForm.credentialValue",

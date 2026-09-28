@@ -241,16 +241,20 @@ export class ConfigStore {
   }
 
   async getHostingProfile(name: string): Promise<HostingProfile | undefined> {
-    return lookup((await this.load()).hostingProfiles, name);
+    return lookup(
+      (await this.load()).hostingProfiles,
+      validateProfileName(name),
+    );
   }
 
   /** Like {@link ConfigStore.getHostingProfile}, but fails with `profile_not_found`. */
   async requireHostingProfile(name: string): Promise<HostingProfileEntry> {
     const document = await this.load();
-    const profile = lookup(document.hostingProfiles, name);
+    const key = validateProfileName(name);
+    const profile = lookup(document.hostingProfiles, key);
     if (profile === undefined)
       throw profileNotFound(name, sortedNames(document.hostingProfiles));
-    return { name, profile };
+    return { name: key, profile };
   }
 
   /**
@@ -269,9 +273,10 @@ export class ConfigStore {
         { details: { profiles } },
       );
     }
-    const profile = lookup(document.hostingProfiles, requested);
+    const key = validateProfileName(requested);
+    const profile = lookup(document.hostingProfiles, key);
     if (profile === undefined) throw profileNotFound(requested, profiles);
-    return { name: requested, profile };
+    return { name: key, profile };
   }
 
   async upsertHostingProfile(
