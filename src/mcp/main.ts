@@ -72,6 +72,11 @@ export async function mcpMain(
     pendingCredentials ??= createCredentialStore(
       paths.credentialsDir,
       security,
+      // ponytail: headless fork — see src/main.ts
+      {
+        preference:
+          environment.NOVAMIRA_HQ_CREDENTIALS === "file" ? "file" : "auto",
+      },
     );
     return pendingCredentials;
   };

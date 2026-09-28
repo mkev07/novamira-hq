@@ -203,7 +203,12 @@ export async function main(
       pendingCredentials ??= createCredentialStore(
         paths.credentialsDir,
         security,
-        { onWarning: (message) => renderer?.warn(message) },
+        {
+          // ponytail: headless fork — `file` opts into the owner-only file backend where no OS keyring exists
+          preference:
+            environment.NOVAMIRA_HQ_CREDENTIALS === "file" ? "file" : "auto",
+          onWarning: (message) => renderer?.warn(message),
+        },
       );
       return pendingCredentials;
     };

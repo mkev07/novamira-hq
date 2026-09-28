@@ -6,26 +6,39 @@ This fork of [Novamira HQ](https://github.com/use-novamira/novamira-hq) removes 
 
 ## Changes from Upstream
 
-| Area | Original (use-novamira/novamira-hq) | This Fork (mkev07/novamira-hq) |
-| :--- | :--- | :--- |
-| **Bind Address** | Loopback only (`127.0.0.1`, `::1`, `localhost`) | Any address (`0.0.0.0`, Tailscale IP, etc.) |
-| **Request Validation** | Rejects non-loopback `Host`/`Origin` headers | Accepts any valid host header |
-| **Post-Bind Check** | Shuts down if bound to non-loopback | No restriction |
-| **Credential Store** | macOS Keychain / Windows CredMan / Linux secret-tool | Same + existing file-based fallback for headless Linux |
-| **Deployment Target** | Desktop app (macOS/Windows/Linux GUI) | Headless server (Dokploy, Docker, systemd) |
-| **Access Method** | Local browser only | Any device on network/Tailscale |
-| **Upstream Sync** | N/A | Merge/rebase from `upstream/main` supported |
+| Area                   | Original (use-novamira/novamira-hq)                  | This Fork (mkev07/novamira-hq)                                |
+| :--------------------- | :--------------------------------------------------- | :------------------------------------------------------------ |
+| **Bind Address**       | Loopback only (`127.0.0.1`, `::1`, `localhost`)      | Any address (`0.0.0.0`, Tailscale IP, etc.)                   |
+| **Request Validation** | Rejects non-loopback `Host`/`Origin` headers         | Accepts any valid host header                                 |
+| **Post-Bind Check**    | Shuts down if bound to non-loopback                  | No restriction                                                |
+| **Credential Store**   | macOS Keychain / Windows CredMan / Linux secret-tool | Same, or owner-only files with `NOVAMIRA_HQ_CREDENTIALS=file` |
+| **Deployment Target**  | Desktop app (macOS/Windows/Linux GUI)                | Headless server (Dokploy, Docker, systemd)                    |
+| **Access Method**      | Local browser only                                   | Any device on network/Tailscale                               |
+| **Upstream Sync**      | N/A                                                  | Merge/rebase from `upstream/main` supported                   |
 
 ### Technical Details
 
 Three surgical patches in `src/web/server.ts`:
+
 1.  `requireLoopbackHost()` — returns immediately instead of throwing
 2.  `requireLoopbackRequest()` — skips Host/Origin/sec-fetch-site validation
 3.  Post-bind loopback assertion — removed entirely
 
-Credential storage uses the existing `FileCredentialBackend` in `src/credentials/store.ts` (owner-only `0600` files) when no OS keyring is available — no new code added.
+`NOVAMIRA_HQ_CREDENTIALS=file` (read in `src/main.ts` and `src/mcp/main.ts`) selects upstream's existing `FileCredentialBackend` (owner-only `0600` files, not encrypted). Without it, HQ refuses to save credentials when no OS keyring exists.
 
 All patches are marked with `// ponytail:` comments for easy identification during upstream merges.
+
+### Server environment
+
+Mount one persistent volume at `/data` and set:
+
+| Variable                  | Value        | Holds                                  |
+| :------------------------ | :----------- | :------------------------------------- |
+| `NOVAMIRA_HQ_HOME`        | `/data/hq`   | HQ config, history, locks, credentials |
+| `NOVAMIRA_HOME`           | `/data/site` | Site CLI profiles (WordPress tokens)   |
+| `NOVAMIRA_HQ_CREDENTIALS` | `file`       | Use the file credential backend        |
+
+The dashboard has no login of its own: anyone who can load the page can use it. Only expose it on a private network (e.g. `tailscale serve`), never publicly.
 
 ## Original README
 
@@ -48,7 +61,7 @@ and make your sites available to compatible AI agents through one connection.
 - View hosting environments and manually added WordPress sites together.
 - Install and configure Novamira on supported hosting environments.
 - Create and restore backups, clear caches, inspect logs, and use other
-operations supported by each hosting provider.
+  operations supported by each hosting provider.
 - Save, review, and run content pushes between supported environments.
 - Connect an MCP-compatible AI client once and use it across your sites.
 
@@ -67,13 +80,13 @@ WordPress connections remain local to your device.
 ## Privacy and safety
 
 - Hosting credentials stay on your device and are stored using the operating
-system's credential store.
+  system's credential store.
 - Novamira HQ does not store WordPress site tokens in its own configuration.
 - The dashboard is available only on your computer, not on the public network.
 - Destructive provider operations such as deleting sites, environments,
-backups, domains, or DNS records are not exposed.
+  backups, domains, or DNS records are not exposed.
 - Pushes and restores require an explicit review and confirmation. Creating a
-backup is always a separate action.
+  backup is always a separate action.
 
 Read more in the [Novamira HQ documentation](https://novamira.ai/docs/hq).
 
