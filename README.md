@@ -1,36 +1,72 @@
 # Novamira HQ (Headless Fork)
 
-**Always-on web dashboard for Novamira, designed for Tailscale/server deployment.**
+**Always-on Novamira HQ dashboard on a Linux server, reachable only over Tailscale.**
 
-This fork of [Novamira HQ](https://github.com/use-novamira/novamira-hq) removes the desktop-only loopback restrictions to enable headless deployment on Linux servers (e.g., Dokploy on vector-core). Access your WordPress sites and AI connections from anywhere on your tailnet without needing a local Mac/desktop running.
+This fork of [Novamira HQ](https://github.com/use-novamira/novamira-hq) runs the
+dashboard headless in a container (Dokploy on `vector-core`) instead of as a
+desktop app, so your hosting accounts and WordPress sites are available from any
+device on your tailnet without a Mac left running.
 
-## Changes from Upstream
+## How it works
 
-| Area                   | Original (use-novamira/novamira-hq)                  | This Fork (mkev07/novamira-hq)                                |
-| :--------------------- | :--------------------------------------------------- | :------------------------------------------------------------ |
-| **Bind Address**       | Loopback only (`127.0.0.1`, `::1`, `localhost`)      | Any address (`0.0.0.0`, Tailscale IP, etc.)                   |
-| **Request Validation** | Rejects non-loopback `Host`/`Origin` headers         | Accepts any valid host header                                 |
-| **Post-Bind Check**    | Shuts down if bound to non-loopback                  | No restriction                                                |
-| **Credential Store**   | macOS Keychain / Windows CredMan / Linux secret-tool | Same, or owner-only files with `NOVAMIRA_HQ_CREDENTIALS=file` |
-| **Deployment Target**  | Desktop app (macOS/Windows/Linux GUI)                | Headless server (Dokploy, Docker, systemd)                    |
-| **Access Method**      | Local browser only                                   | Any device on network/Tailscale                               |
-| **Upstream Sync**      | N/A                                                  | Merge/rebase from `upstream/main` supported                   |
+```
+ your device (on the tailnet)
+        │  https://<server>.<tailnet>.ts.net:8788
+        ▼
+ tailscale serve --https=8788        host setting · tailnet-only · auto TLS
+        │  http://127.0.0.1:18787
+        ▼
+ novamira-hq-tailnet (Dokploy compose)   Caddy relay, bound to loopback only
+        │  http://app-…:8787 over dokploy-network
+        ▼
+ novamira-hq-web (Dokploy application)   this repo, built by Nixpacks
+        │
+        ▼
+ volume novamira-hq-data → /data         config, history, credentials, site logins
+```
 
-### Technical Details
+- **The app** (`novamira-hq-web`) builds this repo with [`nixpacks.toml`](nixpacks.toml)
+  (`npm run build`) and starts `node dist/index.js dashboard --listen 0.0.0.0:8787`.
+  `0.0.0.0` is inside the container only; the port is **not** published on the host.
+- **The relay** (`novamira-hq-tailnet`) exists because a Swarm service cannot
+  publish a port on `127.0.0.1` alone. A standalone Caddy container on
+  `dokploy-network` forwards `127.0.0.1:18787` → the app's service name, so it
+  keeps working across redeploys.
+- **Tailscale Serve** on the host terminates HTTPS with the node's `ts.net`
+  certificate and only accepts tailnet peers. Nothing about the dashboard is
+  reachable from the public internet.
+- **The volume** keeps all state across redeploys (see environment below).
+- **Deploys**: a GitHub push webhook on this repo calls Dokploy's deploy URL for
+  the app, so every push to `main` rebuilds and restarts it.
 
-Three surgical patches in `src/web/server.ts`:
+The dashboard has **no login of its own**: anyone who can load the page gets its
+mutation token and can use it. The private network is the only access control —
+never publish port 8787 or attach a public domain without adding auth in front.
 
-1.  `requireLoopbackHost()` — returns immediately instead of throwing
-2.  `requireLoopbackRequest()` — skips Host/Origin/sec-fetch-site validation
-3.  Post-bind loopback assertion — removed entirely
+## Changes from upstream
 
-`NOVAMIRA_HQ_CREDENTIALS=file` (read in `src/main.ts` and `src/mcp/main.ts`) selects upstream's existing `FileCredentialBackend` (owner-only `0600` files, not encrypted). Without it, HQ refuses to save credentials when no OS keyring exists.
+| Area             | Upstream                                              | This fork                                                     |
+| :--------------- | :---------------------------------------------------- | :------------------------------------------------------------ |
+| Bind address     | Loopback only (`127.0.0.1`, `::1`, `localhost`)       | Any address                                                   |
+| Request checks   | Rejects non-loopback `Host`/`Origin`/`Sec-Fetch-Site` | Not checked (DNS-rebinding guard removed)                     |
+| Post-bind check  | Exits if bound to a non-loopback address              | Removed                                                       |
+| Credential store | OS keyring only; refuses to save without one          | Same, or owner-only files with `NOVAMIRA_HQ_CREDENTIALS=file` |
+| Runs as          | Desktop app                                           | Headless container                                            |
 
-All patches are marked with `// ponytail:` comments for easy identification during upstream merges.
+Code patches, all marked `// ponytail:` for easy spotting during merges:
 
-### Server environment
+1. `src/web/server.ts` — `requireLoopbackHost()` is a no-op.
+2. `src/web/server.ts` — `requireLoopbackRequest()` is a no-op.
+3. `src/web/server.ts` — the post-bind loopback assertion is removed.
+4. `src/main.ts`, `src/mcp/main.ts` — `NOVAMIRA_HQ_CREDENTIALS=file` selects
+   upstream's existing `FileCredentialBackend` (`0600` files, not encrypted).
 
-Mount one persistent volume at `/data` and set:
+Plus [`nixpacks.toml`](nixpacks.toml) for the Dokploy build.
+
+## Deployment (Dokploy)
+
+**1. Application** — Git source pointing at this repo, branch `main`, no domain.
+Environment, plus a volume mount `novamira-hq-data` → `/data`:
 
 | Variable                  | Value        | Holds                                  |
 | :------------------------ | :----------- | :------------------------------------- |
@@ -38,11 +74,58 @@ Mount one persistent volume at `/data` and set:
 | `NOVAMIRA_HOME`           | `/data/site` | Site CLI profiles (WordPress tokens)   |
 | `NOVAMIRA_HQ_CREDENTIALS` | `file`       | Use the file credential backend        |
 
-The dashboard has no login of its own: anyone who can load the page can use it. Only expose it on a private network (e.g. `tailscale serve`), never publicly.
+**2. Relay** — a compose service in the same project (replace the service name
+with the app's Dokploy app name):
+
+```yaml
+services:
+  tailnet-relay:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    command: caddy reverse-proxy --from :8787 --to <app-name>:8787
+    ports:
+      - "127.0.0.1:18787:8787"
+    networks:
+      - dokploy-network
+networks:
+  dokploy-network:
+    external: true
+```
+
+**3. Tailscale Serve** — once, on the host:
+
+```sh
+sudo tailscale serve --bg --https=8788 http://127.0.0.1:18787
+```
+
+**4. Auto-deploy** — GitHub → Settings → Webhooks → `push` events to the app's
+Dokploy deploy URL (`https://<dokploy>/api/deploy/<app refresh token>`).
+
+## Updating from upstream
+
+```sh
+git fetch upstream
+git merge upstream/main
+bun install && bun run build && node --test test/*.test.mjs
+git push origin main   # webhook redeploys
+```
+
+Five upstream tests are expected to fail because they assert the loopback
+guards this fork removes (`requireLoopbackHost rejects…`, `a --listen naming a
+routable host…`, `a non-loopback bind is refused…`, `the Host guard…`,
+`the Origin and Sec-Fetch-Site guards`). Any other failure is real.
 
 ## Original README
 
-Below is the original Novamira HQ documentation. All features apply to this fork except the desktop-specific installation instructions — use `node dist/index.js dashboard --listen 0.0.0.0:8787` (or your Tailscale IP) instead.
+Below is the upstream documentation. All features apply to this fork, with these
+exceptions in a headless deployment:
+
+- The desktop download and install steps do not apply; see
+  [Deployment](#deployment-dokploy).
+- "Runs on your computer" / "available only on your computer" becomes "runs on
+  the server, available only on your tailnet".
+- Hosting credentials are stored in owner-only files on the `/data` volume, not
+  in an OS credential store.
 
 ---
 
