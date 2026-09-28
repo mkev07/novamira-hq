@@ -7,11 +7,13 @@ It describes ordinary HQ builds and a source-build path for modifying the
 LGPL-covered glibc-derived code embedded through V8. It is not legal clearance,
 nor a claim of byte-for-byte reproducibility of signed release artifacts.
 
-**Verification status:** HQ build/package checks are automated. The upstream
-source-build controls below have been checked in upstream documentation/code.
-The complete modified-V8 → Deno runtime → HQ build has **not yet been executed
-and validated by this project**, on any platform. Do not mark that step complete
-based only on the presence of this guide.
+**Verification status:** The modified-V8 → Deno runtime → HQ executable path
+was exercised on macOS Apple Silicon on 2026-09-28. A marker inserted into the
+glibc-derived source, `HQ_LICENSE_REBUILD_20260928`, survived in both `denort`
+and the compiled HQ executable, which passed the desktop smoke suite. This is
+a local source/relinking verification, not signed-installer acceptance or
+verification of the other three release targets. See
+`license-docs/desktop-license-review.md` for the evidence and remaining gaps.
 
 ## Match the distributed version
 
@@ -24,7 +26,7 @@ The current reference chain is:
 | Component | Source reference                                                             |
 | --------- | ---------------------------------------------------------------------------- |
 | HQ        | https://github.com/use-novamira/novamira-hq — matching release tag/commit    |
-| Site CLI  | https://github.com/use-novamira/novamira-cli/tree/v1.3.1                     |
+| Site CLI  | https://github.com/use-novamira/novamira-cli/tree/v1.3.2                     |
 | Deno      | https://github.com/denoland/deno/tree/v2.9.6                                 |
 | Rusty V8  | https://github.com/denoland/rusty_v8/tree/v150.4.0                           |
 | V8        | https://github.com/denoland/v8/tree/ac1e23989121713ca642f6650b34deff7b686896 |
@@ -41,6 +43,9 @@ Build natively for the desired OS/architecture. Install Git, Node.js 22+, Bun
 For runtime rebuilding, also install rustup/Cargo and the toolchain specified by
 Deno's `rust-toolchain.toml`, Python 3, and the native build prerequisites listed
 in the matching Rusty V8 README. Network access is needed to obtain dependencies.
+The pinned Deno source currently specifies Rust 1.95.0. Its macOS Cargo settings
+also select LLVM's linker; make `ld64.lld` available to Clang (for example, from
+the Rust toolchain's `lib/rustlib/aarch64-apple-darwin/bin/gcc-ld` directory).
 
 - macOS: Xcode and command-line tools; build Intel and Apple Silicon separately.
 - Linux: a C/C++ toolchain and Rusty V8's development dependencies; running HQ's
@@ -84,6 +89,10 @@ git -C rusty-v8-source/v8 rev-parse HEAD
 Verify the V8 commit against the table before modifying it. The LGPL code is
 under `rusty-v8-source/v8/third_party/glibc/`; preserve its notices. Keep your
 patch and the original commit IDs. Do not edit installed Cargo registry caches.
+Use the recursive Git checkout: the published `v8` crate omits files required
+by a source build, including `third_party/icu/common/icudtl.dat` and files in
+the Chromium Rust vendor tree. A successful download of that crate alone is
+not a complete source-build environment.
 
 In the Deno source checkout, add an entry to its root Cargo.toml
 `[patch.crates-io]` table (merge with any existing table):
@@ -157,4 +166,5 @@ submodules, dependency locks, modifications, toolchain versions, build commands,
 logs and output checksums needed to fulfill the offer. Record successful tests
 separately for macOS Intel, macOS Apple Silicon, Windows and Linux. Public upstream
 links help recipients locate materials but do not cancel Ovation's source offer
-if a link later disappears. No end-to-end runtime rebuild is recorded yet.
+if a link later disappears. The recorded macOS Apple Silicon source-build test
+does not replace preservation of those materials or verification of other targets.

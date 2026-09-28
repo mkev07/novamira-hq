@@ -28,7 +28,7 @@ await Promise.all(
       const target = join(dir, "texts", `${id}.json`);
       try {
         const cached = JSON.parse(await readFile(target, "utf8"));
-        if (cached.parserVersion === 2 && cached.checksum === pkg.checksum) {
+        if (cached.parserVersion === 3 && cached.checksum === pkg.checksum) {
           results.push(cached);
           done++;
           continue;
@@ -110,7 +110,7 @@ await Promise.all(
           .map(([path]) => path.slice(id.length + 1));
         const vcsFile = files.get(`${id}/.cargo_vcs_info.json`);
         const result = {
-          parserVersion: 2,
+          parserVersion: 3,
           name: pkg.name,
           version: pkg.version,
           license: manifest.license ?? pkg.license,

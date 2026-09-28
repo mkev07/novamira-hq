@@ -1,0 +1,653 @@
+{
+  "schemaVersion": 1,
+  "lockSha256": "6c6af74640994cc41fcc7f46bb5204a50da679adc2dee96cb05aa97867baf7e1",
+  "standardLicenses": {
+    "Apache-2.0": {
+      "source": "https://www.apache.org/licenses/LICENSE-2.0.txt",
+      "sourceSha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "file": "licenses/apache-2.0.txt",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    },
+    "MIT": {
+      "source": "https://raw.githubusercontent.com/spdx/license-list-data/v3.27.0/text/MIT.txt",
+      "sourceSha256": "b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5",
+      "file": "licenses/mit-terms.txt",
+      "sha256": "9645fb6e878aebd5e959be648a71973a108d4aa0d18eee478d0579066ad99958",
+      "transformation": "The SPDX template copyright placeholder is omitted. Original package copyright headers and published author credits are preserved separately; no copyright holder or year is invented."
+    },
+    "CC0-1.0": {
+      "source": "https://raw.githubusercontent.com/spdx/license-list-data/v3.27.0/text/CC0-1.0.txt",
+      "sourceSha256": "a2010f343487d3f7618affe54f789f5487602331c0a8d03f49e9a7c547cf0499",
+      "file": "licenses/cc0-1.0.txt",
+      "sha256": "a2010f343487d3f7618affe54f789f5487602331c0a8d03f49e9a7c547cf0499"
+    }
+  },
+  "packages": [
+    {
+      "name": "aead-gcm-stream",
+      "version": "0.4.0",
+      "archiveSha256": "e70c8dec860340effb00f6945c49c0daaa6dac963602750db862eabb74bf7886",
+      "manifestSha256": "5666b86b83373a1dc6d50b6ef768423fd5160f4ea22e142ae1726ef4fb25c563",
+      "declaredLicense": "MIT",
+      "selectedLicense": "MIT",
+      "authors": ["Divy Srivastava <dj.srivastava23@gmail.com>"],
+      "copyrightHeaders": [],
+      "basis": "License declaration in the checksum-verified published Cargo.toml. Standard license terms are bundled with observed source copyright headers and published author credits. A missing standalone license file or unavailable VCS revision is not itself a conflicting license declaration."
+    },
+    {
+      "name": "ast_node",
+      "version": "5.0.0",
+      "archiveSha256": "2eb025ef00a6da925cf40870b9c8d008526b6004ece399cb0974209720f0b194",
+      "manifestSha256": "d8afa2c1ac658339e43c877389697421dd4f54a7aed232b14c40534f8f1cb894",
+      "declaredLicense": "Apache-2.0",
+      "selectedLicense": "Apache-2.0",
+      "authors": ["강동윤 <kdy1997.dev@gmail.com>"],
+      "copyrightHeaders": [],
+      "basis": "License declaration in the checksum-verified published Cargo.toml. Standard license terms are bundled with observed source copyright headers and published author credits. A missing standalone license file or unavailable VCS revision is not itself a conflicting license declaration."
+    },
+    {
+      "name": "better_scoped_tls",
+      "version": "1.0.1",
+      "archiveSha256": "7cd228125315b132eed175bf47619ac79b945b26e56b848ba203ae4ea8603609",
+      "manifestSha256": "34ed76ba7b40bbbb64686bb99b218f50a0a30566bcc514c27f5065a9ceb83d3d",
+      "declaredLicense": "Apache-2.0",
+      "selectedLicense": "Apache-2.0",
+      "authors": ["강동윤 <kdy1997.dev@gmail.com>"],
+      "copyrightHeaders": [],
+      "basis": "License declaration in the checksum-verified published Cargo.toml. Standard license terms are bundled with observed source copyright headers and published author credits. A missing standalone license file or unavailable VCS revision is not itself a conflicting license declaration."
+    },
+    {
+      "name": "deno_core_icudata",
+      "version": "0.77.0",
+      "archiveSha256": "a9efff8990a82c1ae664292507e1a5c6749ddd2312898cdf9cd7cb1fd4bc64c6",
+      "manifestSha256": "dbc33246972b27584b48a4d3d13c8f0a2f9e748619b2a8546774cb5157f732e1",
+      "declaredLicense": "MIT",
+      "selectedLicense": "MIT",
+      "authors": ["the Deno authors"],
+      "copyrightHeaders": [],
+      "additionalNativeNotices": ["rusty_v8/third_party/icu/LICENSE"],
+      "basis": "License declaration in the checksum-verified published Cargo.toml. Standard license terms are bundled with observed source copyright headers and published author credits. A missing standalone license file or unavailable VCS revision is not itself a conflicting license declaration."
+    },
+    {
+      "name": "deno_native_certs",
+      "version": "0.3.0",
+      "archiveSha256": "c867603d2a5dfea31f55cecebb572554caa395437786d058faa9a2814c8d6eb9",
+      "manifestSha256": "ac2c9419e239b1529fff437a4ec5be536739e37d3faaa5c9b39fc9fd92004fb8",
+      "declaredLicense": "MIT",
+      "selectedLicense": "MIT",
+      "authors": ["Divy Srivastava <dj.srivastava23@gmail.com>"],
+      "copyrightHeaders": [],
+      "basis": "License declaration in the checksum-verified published Cargo.toml. Standard license terms are bundled with observed source copyright headers and published author credits. A missing standalone license file or unavailable VCS revision is not itself a conflicting license declaration."
+    },
+    {
+      "name": "deno_tunnel",
+      "version": "0.8.1",
+      "archiveSha256": "e432929e0c167f2a003b963ee406c714fcd947a87d4f9edc7b3255e87be9881d",
+      "manifestSha256": "d9f6b0d1d52de0c4e5aaeb632b69577c7bad3d5a8800f4ec5425c34d41d99e4d",
+      "declaredLicense": "MIT",
+      "selectedLicense": "MIT",
+      "authors": ["the Deno authors"],
+      "copyrightHeaders": [
+        {
+          "paths": ["src/lib.rs"],
+          "text": "// Copyright 2018-2025 the Deno authors. MIT license."
+        }
+      ],
+      "basis": "License declaration in the checksum-verified published Cargo.toml. Standard license terms are bundled with observed source copyright headers and published author credits. A missing standalone license file or unavailable VCS revision is not itself a conflicting license declaration."
+    },
+    {
+      "name": "derive-io-macros",
+      "version": "0.4.1",
+      "archiveSha256": "8d0a1bd7eeab72097740967d03d53db5fbaf8e3c0dd471ebdefa43ce445a20a6",
+      "manifestSha256": "2d6e8123697a24c9b8a91dca1e0f885b04de1be01e9988084e0c103f0e7b9841",
+      "declaredLicense": "MIT OR Apache-2.0",
+      "selectedLicense": "Apache-2.0",
+      "authors": ["Matt Mastracci <matthew@mastracci.com>"],
+      "copyrightHeaders": [],
+      "basis": "License declaration in the checksum-verified published Cargo.toml. Standard license terms are bundled with observed source copyright headers and published author credits. A missing standalone license file or unavailable VCS revision is not itself a conflicting license declaration."
+    },
+    {
+      "name": "derive-io",
+      "version": "0.4.1",
+      "archiveSha256": "58cc7f4740088458993d183a200fe56e62378736f94bf0e2dd45807407e7bb94",
+      "manifestSha256": "82cd81a695f9f06c7c03768c53a7334d4a9b1908ef6ff20befa298104689dc22",
+      "declaredLicense": "MIT OR Apache-2.0",
+      "selectedLicense": "Apache-2.0",
+      "authors": ["Matt Mastracci <matthew@mastracci.com>"],
+      "copyrightHeaders": [],
+      "basis": "License declaration in the checksum-verified published Cargo.toml. Standard license terms are bundled with observed source copyright headers and published author credits. A missing standalone license file or unavailable VCS revision is not itself a conflicting license declaration."
+    },
+    {
+      "name": "dlopen2",
+      "version": "0.6.1",
+      "archiveSha256": "6bc2c7ed06fd72a8513ded8d0d2f6fd2655a85d6885c48cae8625d80faf28c03",
+      "manifestSha256": "b18c567adfaeedbacf693971a532ec864c7e7e1d0543f40fff90cabbfb8ab0ac",
+      "declaredLicense": "MIT",
+      "selectedLicense": "MIT",
+      "authors": [
+        "Szymon Wieloch <szymon.wieloch@gmail.com>",
+        "Ahmed Masud <ahmed.masud@saf.ai>",
+        "OpenByte <development.openbyte@gmail.com>"
+      ],
+      "copyrightHeaders": [],
+      "basis": "License declaration in the checksum-verified published Cargo.toml. Standard license terms are bundled with observed source copyright headers and published author credits. A missing standalone license file or unavailable VCS revision is not itself a conflicting license declaration."
+    },
+    {
+      "name": "fqdn",
+      "version": "0.5.2",
+      "archiveSha256": "886ac788f62d16d6b0f26b2fa762b34ef16ebfb4b624c2c15fbcadc9173c0f72",
+      "manifestSha256": "44d1a40dcb00eac024e8fe6cc8207b023ba88351511b20c0f30d249947d2b848",
+      "declaredLicense": "MIT",
+      "selectedLicense": "MIT",
+      "authors": ["Xophe <christophe.dousson@orange.com>"],
+      "copyrightHeaders": [],
+      "basis": "License declaration in the checksum-verified published Cargo.toml. Standard license terms are bundled with observed source copyright headers and published author credits. A missing standalone license file or unavailable VCS revision is not itself a conflicting license declaration."
+    },
+    {
+      "name": "from_variant",
+      "version": "3.0.0",
+      "archiveSha256": "e5ff35a391aef949120a0340d690269b3d9f63460a6106e99bd07b961f345ea9",
+      "manifestSha256": "e325427c1432e326550693e55f6c1a1ca6384630205fcd0a1eaa92b0b1078ebb",
+      "declaredLicense": "Apache-2.0",
+      "selectedLicense": "Apache-2.0",
+      "authors": ["강동윤 <kdy1997.dev@gmail.com>"],
+      "copyrightHeaders": [],
+      "basis": "License declaration in the checksum-verified published Cargo.toml. Standard license terms are bundled with observed source copyright headers and published author credits. A missing standalone license file or unavailable VCS revision is not itself a conflicting license declaration."
+    },
+    {
+      "name": "hexf-parse",
+      "version": "0.2.1",
+      "archiveSha256": "dfa686283ad6dd069f105e5ab091b04c62850d3e4cf5d67debad1933f55023df",
+      "manifestSha256": "dd7274968556f3f3309df5615d94437ec4e4823777cc440f91177b2170cbe2a7",
+      "declaredLicense": "CC0-1.0",
+      "selectedLicense": "CC0-1.0",
+      "authors": ["Kang Seonghoon <public+rust@mearie.org>"],
+      "copyrightHeaders": [],
+      "basis": "License declaration in the checksum-verified published Cargo.toml. Standard license terms are bundled with observed source copyright headers and published author credits. A missing standalone license file or unavailable VCS revision is not itself a conflicting license declaration."
+    },
+    {
+      "name": "rsqlite-vfs",
+      "version": "0.1.1",
+      "archiveSha256": "c51c9ae4df8a7fba42103df5c621fa3c37eccf3a3c650879e90fc48b11cc192c",
+      "manifestSha256": "2134b8f37e904ca9ed6ae7fb8ffde7e6e93089188dd2378670ccd0af0c468861",
+      "declaredLicense": "MIT",
+      "selectedLicense": "MIT",
+      "authors": [],
+      "copyrightHeaders": [],
+      "basis": "License declaration in the checksum-verified published Cargo.toml. Standard license terms are bundled with observed source copyright headers and published author credits. A missing standalone license file or unavailable VCS revision is not itself a conflicting license declaration."
+    },
+    {
+      "name": "rustls-tokio-stream",
+      "version": "0.8.0",
+      "archiveSha256": "0560d12c0d8c672f849197de91b9ee61f5bf9aa024c97aaeeb112ec2f6c347fd",
+      "manifestSha256": "cfd4afde0fae32af02b7b87ccbc4515f773b95e88c3f59e3241f14b437eae86a",
+      "declaredLicense": "MIT",
+      "selectedLicense": "MIT",
+      "authors": [],
+      "copyrightHeaders": [
+        {
+          "paths": [
+            "src/adapter.rs",
+            "src/connection_stream.rs",
+            "src/handshake.rs",
+            "src/lib.rs",
+            "src/stream.rs",
+            "src/system_test/fastwebsockets.rs",
+            "src/system_test/mod.rs"
+          ],
+          "text": "// Copyright 2018-2023 the Deno authors. All rights reserved. MIT license."
+        }
+      ],
+      "basis": "License declaration in the checksum-verified published Cargo.toml. Standard license terms are bundled with observed source copyright headers and published author credits. A missing standalone license file or unavailable VCS revision is not itself a conflicting license declaration."
+    },
+    {
+      "name": "sacabase",
+      "version": "2.0.0",
+      "archiveSha256": "9883fc3d6ce3d78bb54d908602f8bc1f7b5f983afe601dabe083009d86267a84",
+      "manifestSha256": "4ba98602ed4464ee69f327b4b8db40edd08e305530742f4ba422efa8a457a8e6",
+      "declaredLicense": "MIT",
+      "selectedLicense": "MIT",
+      "authors": ["Amos Wenger <amoswenger@gmail.com>"],
+      "copyrightHeaders": [],
+      "basis": "License declaration in the checksum-verified published Cargo.toml. Standard license terms are bundled with observed source copyright headers and published author credits. A missing standalone license file or unavailable VCS revision is not itself a conflicting license declaration."
+    },
+    {
+      "name": "sptr",
+      "version": "0.3.2",
+      "archiveSha256": "3b9b39299b249ad65f3b7e96443bad61c02ca5cd3589f46cb6d610a0fd6c0d6a",
+      "manifestSha256": "55ca3d8830461a6aac89be106ca2cfd666e63e21f832e7493d9bbb0f33fcc36e",
+      "declaredLicense": "MIT OR Apache-2.0",
+      "selectedLicense": "Apache-2.0",
+      "authors": [],
+      "copyrightHeaders": [],
+      "basis": "License declaration in the checksum-verified published Cargo.toml. Standard license terms are bundled with observed source copyright headers and published author credits. A missing standalone license file or unavailable VCS revision is not itself a conflicting license declaration."
+    },
+    {
+      "name": "string_enum",
+      "version": "1.0.2",
+      "archiveSha256": "ae36a4951ca7bd1cfd991c241584a9824a70f6aff1e7d4f693fb3f2465e4030e",
+      "manifestSha256": "e9383525c0e65d08334309e4bfdda984da7c300f006fd5642cc7c6a93d074b33",
+      "declaredLicense": "Apache-2.0",
+      "selectedLicense": "Apache-2.0",
+      "authors": ["강동윤 <kdy1997.dev@gmail.com>"],
+      "copyrightHeaders": [],
+      "basis": "License declaration in the checksum-verified published Cargo.toml. Standard license terms are bundled with observed source copyright headers and published author credits. A missing standalone license file or unavailable VCS revision is not itself a conflicting license declaration."
+    },
+    {
+      "name": "swc_allocator",
+      "version": "4.0.1",
+      "archiveSha256": "9d7eefd2c8b228a8c73056482b2ae4b3a1071fbe07638e3b55ceca8570cc48bb",
+      "manifestSha256": "6592a906f927c4109ef2c735595819d465ca427c9dd9bf6cf151f7a07f9f4916",
+      "declaredLicense": "Apache-2.0",
+      "selectedLicense": "Apache-2.0",
+      "authors": ["강동윤 <kdy1997.dev@gmail.com>"],
+      "copyrightHeaders": [],
+      "basis": "License declaration in the checksum-verified published Cargo.toml. Standard license terms are bundled with observed source copyright headers and published author credits. A missing standalone license file or unavailable VCS revision is not itself a conflicting license declaration."
+    },
+    {
+      "name": "swc_atoms",
+      "version": "9.0.0",
+      "archiveSha256": "d4ccbe2ecad10ad7432100f878a107b1d972a8aee83ca53184d00c23a078bb8a",
+      "manifestSha256": "6cdeded436d64993d98c4ca8ce4c8efcc17d29cdf6551205fd7f22210e85d36c",
+      "declaredLicense": "Apache-2.0",
+      "selectedLicense": "Apache-2.0",
+      "authors": ["강동윤 <kdy1997.dev@gmail.com>"],
+      "copyrightHeaders": [],
+      "basis": "License declaration in the checksum-verified published Cargo.toml. Standard license terms are bundled with observed source copyright headers and published author credits. A missing standalone license file or unavailable VCS revision is not itself a conflicting license declaration."
+    },
+    {
+      "name": "swc_common",
+      "version": "17.0.1",
+      "archiveSha256": "259b675d633a26d24efe3802a9d88858c918e6e8f062d3222d3aa02d56a2cf4c",
+      "manifestSha256": "469abf116fafe1d7b83ac559d17a29e648139890dc1f7818a57cacaefed3c8ea",
+      "declaredLicense": "Apache-2.0",
+      "selectedLicense": "Apache-2.0",
+      "authors": ["강동윤 <kdy1997.dev@gmail.com>"],
+      "copyrightHeaders": [
+        {
+          "paths": [
+            "src/errors/diagnostic.rs",
+            "src/errors/diagnostic_builder.rs",
+            "src/errors/emitter.rs",
+            "src/errors/mod.rs"
+          ],
+          "text": "// Copyright 2012-2015 The Rust Project Developers. See the COPYRIGHT\n// file at the top-level directory of this distribution and at\n// http://rust-lang.org/COPYRIGHT.\n//\n// Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or\n// http://www.apache.org/licenses/LICENSE-2.0> or the MIT license\n// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your\n// option. This file may not be copied, modified, or distributed\n// except according to those terms."
+        },
+        {
+          "paths": ["src/errors/lock.rs"],
+          "text": "// Copyright 2016 The Rust Project Developers. See the COPYRIGHT\n// file at the top-level directory of this distribution and at\n// http://rust-lang.org/COPYRIGHT.\n//\n// Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or\n// http://www.apache.org/licenses/LICENSE-2.0> or the MIT license\n// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your\n// option. This file may not be copied, modified, or distributed\n// except according to those terms.\n\n//! Bindings to acquire a global named lock.\n//!\n//! This is intended to be used to synchronize multiple compiler processes to\n//! ensure that we can output complete errors without interleaving on Windows.\n//! Note that this is currently only needed for allowing only one 32-bit MSVC\n//! linker to execute at once on MSVC hosts, so this is only implemented for\n//! `cfg(windows)`. Also note that this may not always be used on Windows,\n//! only when targeting 32-bit MSVC.\n//!\n//! For more information about why this is necessary, see where this is called."
+        },
+        {
+          "paths": ["src/errors/snippet.rs"],
+          "text": "// Copyright 2012-2015 The Rust Project Developers. See the COPYRIGHT\n// file at the top-level directory of this distribution and at\n// http://rust-lang.org/COPYRIGHT.\n//\n// Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or\n// http://www.apache.org/licenses/LICENSE-2.0> or the MIT license\n// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your\n// option. This file may not be copied, modified, or distributed\n// except according to those terms.\n\n// Code for annotating snippets."
+        },
+        {
+          "paths": ["src/errors/styled_buffer.rs"],
+          "text": "// Copyright 2012-2015 The Rust Project Developers. See the COPYRIGHT\n// file at the top-level directory of this distribution and at\n// http://rust-lang.org/COPYRIGHT.\n//\n// Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or\n// http://www.apache.org/licenses/LICENSE-2.0> or the MIT license\n// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your\n// option. This file may not be copied, modified, or distributed\n// except according to those terms.\n\n// Code for creating styled buffers"
+        },
+        {
+          "paths": ["src/source_map.rs"],
+          "text": "// Copyright 2012 The Rust Project Developers. See the COPYRIGHT\n// file at the top-level directory of this distribution and at\n// http://rust-lang.org/COPYRIGHT.\n//\n// Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or\n// http://www.apache.org/licenses/LICENSE-2.0> or the MIT license\n// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your\n// option. This file may not be copied, modified, or distributed\n// except according to those terms.\n\n//! The SourceMap tracks all the source code used within a single crate.\n//!\n//! The mapping from integer byte positions to the original source code location\n//! is stored in `spans`.\n//!\n//! Each bit of source parsed during crate parsing (typically files, in-memory\n//! strings, or various bits of macro expansion) cover a continuous range of\n//! bytes in the SourceMap and are represented by SourceFiles. Byte positions\n//! are stored in `spans` and used pervasively in the compiler. They are\n//! absolute positions within the SourceMap, which upon request can be converted\n//! to line and column information, source code snippets, etc."
+        },
+        {
+          "paths": ["src/sync.rs"],
+          "text": "// Copyright 2017 The Rust Project Developers. See the COPYRIGHT\n// file at the top-level directory of this distribution and at\n// http://rust-lang.org/COPYRIGHT.\n//\n// Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or\n// http://www.apache.org/licenses/LICENSE-2.0> or the MIT license\n// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your\n// option. This file may not be copied, modified, or distributed\n// except according to those terms.\n\n//! This module defines types which are thread safe if `cfg!(feature =\n//! \"concurrent\")` is true.\n//!\n//! `Lrc` is an alias of either Rc or Arc.\n//!\n//! `Lock` is a mutex.\n//! It internally uses `parking_lot::Mutex` if cfg!(parallel_queries) is true,\n//! `RefCell` otherwise.\n//!\n//! `RwLock` is a read-write lock.\n//! It internally uses `parking_lot::RwLock` if cfg!(parallel_queries) is true,\n//! `RefCell` otherwise.\n//!\n//! `LockCell` is a thread safe version of `Cell`, with `set` and `get`\n//! operations. It can never deadlock. It uses `Cell` when\n//! cfg!(parallel_queries) is false, otherwise it is a `Lock`.\n//!\n//! `MTLock` is a mutex which disappears if cfg!(parallel_queries) is false.\n//!\n//! `MTRef` is a immutable reference if cfg!(parallel_queries), and an mutable\n//! reference otherwise.\n//!\n//! `rustc_erase_owner!` erases a OwningRef owner into Erased or Erased + Send +\n//! Sync depending on the value of cfg!(parallel_queries)."
+        },
+        {
+          "paths": ["src/syntax_pos/analyze_source_file.rs"],
+          "text": "// Copyright 2018 The Rust Project Developers. See the COPYRIGHT\n// file at the top-level directory of this distribution and at\n// http://rust-lang.org/COPYRIGHT.\n//\n// Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or\n// http://www.apache.org/licenses/LICENSE-2.0> or the MIT license\n// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your\n// option. This file may not be copied, modified, or distributed\n// except according to those terms."
+        },
+        {
+          "paths": ["src/syntax_pos/hygiene.rs"],
+          "text": "// Copyright 2012-2014 The Rust Project Developers. See the COPYRIGHT\n// file at the top-level directory of this distribution and at\n// http://rust-lang.org/COPYRIGHT.\n//\n// Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or\n// http://www.apache.org/licenses/LICENSE-2.0> or the MIT license\n// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your\n// option. This file may not be copied, modified, or distributed\n// except according to those terms.\n\n//! Machinery for hygienic macros, inspired by the `MTWT[1]` paper.\n//!\n//! `[1]` Matthew Flatt, Ryan Culpepper, David Darais, and Robert Bruce Findler.\n//! 2012. *Macros that work together: Compile-time bindings, partial expansion,\n//! and definition contexts*. J. Funct. Program. 22, 2 (March 2012), 181-216.\n//! DOI=10.1017/S0956796812000093 <https://doi.org/10.1017/S0956796812000093>"
+        }
+      ],
+      "basis": "License declaration in the checksum-verified published Cargo.toml. Standard license terms are bundled with observed source copyright headers and published author credits. A missing standalone license file or unavailable VCS revision is not itself a conflicting license declaration."
+    },
+    {
+      "name": "swc_config_macro",
+      "version": "1.0.1",
+      "archiveSha256": "7b416e8ce6de17dc5ea496e10c7012b35bbc0e3fef38d2e065eed936490db0b3",
+      "manifestSha256": "1cacdec8c7c079b66faa56da3fd0ee0762a156e8dffaad50c26563440387158c",
+      "declaredLicense": "Apache-2.0",
+      "selectedLicense": "Apache-2.0",
+      "authors": ["강동윤 <kdy1997.dev@gmail.com>"],
+      "copyrightHeaders": [],
+      "basis": "License declaration in the checksum-verified published Cargo.toml. Standard license terms are bundled with observed source copyright headers and published author credits. A missing standalone license file or unavailable VCS revision is not itself a conflicting license declaration."
+    },
+    {
+      "name": "swc_config",
+      "version": "3.1.2",
+      "archiveSha256": "72e90b52ee734ded867104612218101722ad87ff4cf74fe30383bd244a533f97",
+      "manifestSha256": "11f7abc57da66d773a9668c3ef9e2cd4c6a3d8510802974aefb713240107601d",
+      "declaredLicense": "Apache-2.0",
+      "selectedLicense": "Apache-2.0",
+      "authors": ["강동윤 <kdy1997.dev@gmail.com>"],
+      "copyrightHeaders": [],
+      "basis": "License declaration in the checksum-verified published Cargo.toml. Standard license terms are bundled with observed source copyright headers and published author credits. A missing standalone license file or unavailable VCS revision is not itself a conflicting license declaration."
+    },
+    {
+      "name": "swc_ecma_ast",
+      "version": "18.0.0",
+      "archiveSha256": "a573a0c72850dec8d4d8085f152d5778af35a2520c3093b242d2d1d50776da7c",
+      "manifestSha256": "41fc69d1c6051f427a7e70dcddf4ed0a6af7b3c2165508ae5691971a7a7e1136",
+      "declaredLicense": "Apache-2.0",
+      "selectedLicense": "Apache-2.0",
+      "authors": ["강동윤 <kdy1997.dev@gmail.com>"],
+      "copyrightHeaders": [],
+      "basis": "License declaration in the checksum-verified published Cargo.toml. Standard license terms are bundled with observed source copyright headers and published author credits. A missing standalone license file or unavailable VCS revision is not itself a conflicting license declaration."
+    },
+    {
+      "name": "swc_ecma_codegen_macros",
+      "version": "2.0.2",
+      "archiveSha256": "e276dc62c0a2625a560397827989c82a93fd545fcf6f7faec0935a82cc4ddbb8",
+      "manifestSha256": "061ab77b9e3d83b8e5a9640b7172c066633e7f10b2f408f7eef35f26d8b55d39",
+      "declaredLicense": "Apache-2.0",
+      "selectedLicense": "Apache-2.0",
+      "authors": ["강동윤 <kdy1997.dev@gmail.com>"],
+      "copyrightHeaders": [],
+      "basis": "License declaration in the checksum-verified published Cargo.toml. Standard license terms are bundled with observed source copyright headers and published author credits. A missing standalone license file or unavailable VCS revision is not itself a conflicting license declaration."
+    },
+    {
+      "name": "swc_ecma_codegen",
+      "version": "20.0.2",
+      "archiveSha256": "ff2a6ee1ec49dda8dedeac54e4147b4e8b3f278d9bb34ab28983257a393d34ed",
+      "manifestSha256": "c1f108f8b131f931a73dfc7caf5e67fcf97d783918e9bb95daaf790423b28ea9",
+      "declaredLicense": "Apache-2.0",
+      "selectedLicense": "Apache-2.0",
+      "authors": ["강동윤 <kdy1997.dev@gmail.com>"],
+      "copyrightHeaders": [],
+      "basis": "License declaration in the checksum-verified published Cargo.toml. Standard license terms are bundled with observed source copyright headers and published author credits. A missing standalone license file or unavailable VCS revision is not itself a conflicting license declaration."
+    },
+    {
+      "name": "swc_ecma_lexer",
+      "version": "26.0.0",
+      "archiveSha256": "5e82f7747e052c6ff6e111fa4adeb14e33b46ee6e94fe5ef717601f651db48fc",
+      "manifestSha256": "978312ae9c7b041451b5104df29b159e77c6ff24e4181edb500cac8b4947e33f",
+      "declaredLicense": "Apache-2.0",
+      "selectedLicense": "Apache-2.0",
+      "authors": ["강동윤 <kdy1997.dev@gmail.com>"],
+      "copyrightHeaders": [],
+      "basis": "License declaration in the checksum-verified published Cargo.toml. Standard license terms are bundled with observed source copyright headers and published author credits. A missing standalone license file or unavailable VCS revision is not itself a conflicting license declaration."
+    },
+    {
+      "name": "swc_ecma_loader",
+      "version": "17.0.0",
+      "archiveSha256": "fbcababb48f0d46587a0a854b2c577eb3a56fa99687de558338021e93cd2c8f5",
+      "manifestSha256": "8e7a266b8f49f9ec48ba456947dfab7a8373984342c53fd181e4b405b7ec3efe",
+      "declaredLicense": "Apache-2.0",
+      "selectedLicense": "Apache-2.0",
+      "authors": ["강동윤 <kdy1997.dev@gmail.com>"],
+      "copyrightHeaders": [],
+      "basis": "License declaration in the checksum-verified published Cargo.toml. Standard license terms are bundled with observed source copyright headers and published author credits. A missing standalone license file or unavailable VCS revision is not itself a conflicting license declaration."
+    },
+    {
+      "name": "swc_ecma_parser",
+      "version": "27.0.7",
+      "archiveSha256": "7f1a51af1a92cd4904c073b293e491bbc0918400a45d58227b34c961dd6f52d7",
+      "manifestSha256": "addf4b6144f57dc517434b2517fbb59fe26654de9eb63d8e2b30b16dc08daac6",
+      "declaredLicense": "Apache-2.0",
+      "selectedLicense": "Apache-2.0",
+      "authors": ["강동윤 <kdy1997.dev@gmail.com>"],
+      "copyrightHeaders": [],
+      "basis": "License declaration in the checksum-verified published Cargo.toml. Standard license terms are bundled with observed source copyright headers and published author credits. A missing standalone license file or unavailable VCS revision is not itself a conflicting license declaration."
+    },
+    {
+      "name": "swc_ecma_transforms_base",
+      "version": "30.0.1",
+      "archiveSha256": "250f6f165578ca4fee47bd57585c1b9597c94bf4ea6591df47f2b5fa5b1883fe",
+      "manifestSha256": "ecf42b8c09c9dfdf76a39507c7113d9fe9f192e4d431ea42060740cf3f388abb",
+      "declaredLicense": "Apache-2.0",
+      "selectedLicense": "Apache-2.0",
+      "authors": ["강동윤 <kdy1997.dev@gmail.com>"],
+      "copyrightHeaders": [],
+      "basis": "License declaration in the checksum-verified published Cargo.toml. Standard license terms are bundled with observed source copyright headers and published author credits. A missing standalone license file or unavailable VCS revision is not itself a conflicting license declaration."
+    },
+    {
+      "name": "swc_ecma_transforms_classes",
+      "version": "30.0.0",
+      "archiveSha256": "3d3ab35eff4a980e02d708798ae4c35bc017612292adbffe7b7b554df772fdf5",
+      "manifestSha256": "a89170fb6e4fa41f09ae10af6c38bfa6246f09d825b3b0cfcfde529fd1d8f685",
+      "declaredLicense": "Apache-2.0",
+      "selectedLicense": "Apache-2.0",
+      "authors": ["강동윤 <kdy1997.dev@gmail.com>"],
+      "copyrightHeaders": [],
+      "basis": "License declaration in the checksum-verified published Cargo.toml. Standard license terms are bundled with observed source copyright headers and published author credits. A missing standalone license file or unavailable VCS revision is not itself a conflicting license declaration."
+    },
+    {
+      "name": "swc_ecma_transforms_macros",
+      "version": "1.0.1",
+      "archiveSha256": "bc777288799bf6786e5200325a56e4fbabba590264a4a48a0c70b16ad0cf5cd8",
+      "manifestSha256": "9bc032eae297165d95a44739a5f729ba178f2a87eedb221cddb0872c732a1c96",
+      "declaredLicense": "Apache-2.0",
+      "selectedLicense": "Apache-2.0",
+      "authors": ["강동윤 <kdy1997.dev@gmail.com>"],
+      "copyrightHeaders": [],
+      "basis": "License declaration in the checksum-verified published Cargo.toml. Standard license terms are bundled with observed source copyright headers and published author credits. A missing standalone license file or unavailable VCS revision is not itself a conflicting license declaration."
+    },
+    {
+      "name": "swc_ecma_transforms_proposal",
+      "version": "30.0.0",
+      "archiveSha256": "c2d7748d4112c87ce1885260035e4a43cebfe7661a40174b7d77a0a04760a257",
+      "manifestSha256": "5c0929066543dab604ab9e989f52620e901a97b0dc35b64ef866144236aa6699",
+      "declaredLicense": "Apache-2.0",
+      "selectedLicense": "Apache-2.0",
+      "authors": ["강동윤 <kdy1997.dev@gmail.com>"],
+      "copyrightHeaders": [],
+      "basis": "License declaration in the checksum-verified published Cargo.toml. Standard license terms are bundled with observed source copyright headers and published author credits. A missing standalone license file or unavailable VCS revision is not itself a conflicting license declaration."
+    },
+    {
+      "name": "swc_ecma_transforms_react",
+      "version": "33.0.0",
+      "archiveSha256": "03de12e38e47ac1c96ac576f793ad37a9d7b16fbf4f2203881f89152f2498682",
+      "manifestSha256": "d734ffc1294e082bc33b4d49b8fee101c72f5d98d3388b68a63476de59e3b734",
+      "declaredLicense": "Apache-2.0",
+      "selectedLicense": "Apache-2.0",
+      "authors": ["강동윤 <kdy1997.dev@gmail.com>"],
+      "copyrightHeaders": [],
+      "basis": "License declaration in the checksum-verified published Cargo.toml. Standard license terms are bundled with observed source copyright headers and published author credits. A missing standalone license file or unavailable VCS revision is not itself a conflicting license declaration."
+    },
+    {
+      "name": "swc_ecma_transforms_typescript",
+      "version": "33.0.0",
+      "archiveSha256": "4408800fdeb541fabf3659db622189a0aeb386f57b6103f9294ff19dfde4f7b0",
+      "manifestSha256": "11afa0e0fc9b5c9c86c75e901954c62ff1588e381c97c8bd14d3ccd0cbb030ff",
+      "declaredLicense": "Apache-2.0",
+      "selectedLicense": "Apache-2.0",
+      "authors": ["강동윤 <kdy1997.dev@gmail.com>"],
+      "copyrightHeaders": [],
+      "basis": "License declaration in the checksum-verified published Cargo.toml. Standard license terms are bundled with observed source copyright headers and published author credits. A missing standalone license file or unavailable VCS revision is not itself a conflicting license declaration."
+    },
+    {
+      "name": "swc_ecma_utils",
+      "version": "24.0.0",
+      "archiveSha256": "0fb99e179988cabd473779a4452ab942bcb777176983ca3cbaf22a8f056a65b0",
+      "manifestSha256": "57835cd3c139d4b6e0920fa7b086ed3362a6dd4c3235cacfe5b2b92386207257",
+      "declaredLicense": "Apache-2.0",
+      "selectedLicense": "Apache-2.0",
+      "authors": ["강동윤 <kdy1997.dev@gmail.com>"],
+      "copyrightHeaders": [],
+      "basis": "License declaration in the checksum-verified published Cargo.toml. Standard license terms are bundled with observed source copyright headers and published author credits. A missing standalone license file or unavailable VCS revision is not itself a conflicting license declaration."
+    },
+    {
+      "name": "swc_ecma_visit",
+      "version": "18.0.1",
+      "archiveSha256": "a9611a72a4008d62608547a394e5d72a5245413104db096d95a52368a8cc1d63",
+      "manifestSha256": "f59c84e7c51c248781efd28a1f40d0d916ce1cdb505e89a710d50b649b868f19",
+      "declaredLicense": "Apache-2.0",
+      "selectedLicense": "Apache-2.0",
+      "authors": ["강동윤 <kdy1997.dev@gmail.com>"],
+      "copyrightHeaders": [],
+      "basis": "License declaration in the checksum-verified published Cargo.toml. Standard license terms are bundled with observed source copyright headers and published author credits. A missing standalone license file or unavailable VCS revision is not itself a conflicting license declaration."
+    },
+    {
+      "name": "swc_eq_ignore_macros",
+      "version": "1.0.1",
+      "archiveSha256": "c16ce73424a6316e95e09065ba6a207eba7765496fed113702278b7711d4b632",
+      "manifestSha256": "19aa911e0663851a6108c169533c5ad80edda9cf52527fde216684819c4e528b",
+      "declaredLicense": "Apache-2.0",
+      "selectedLicense": "Apache-2.0",
+      "authors": ["강동윤 <kdy1@dudy.kr>"],
+      "copyrightHeaders": [],
+      "basis": "License declaration in the checksum-verified published Cargo.toml. Standard license terms are bundled with observed source copyright headers and published author credits. A missing standalone license file or unavailable VCS revision is not itself a conflicting license declaration."
+    },
+    {
+      "name": "swc_macros_common",
+      "version": "1.0.1",
+      "archiveSha256": "aae1efbaa74943dc5ad2a2fb16cbd78b77d7e4d63188f3c5b4df2b4dcd2faaae",
+      "manifestSha256": "af15bc776a85dea7b9b11da2cd7d30fed7a2a9c7f4cb95e451dcc5cf307826d4",
+      "declaredLicense": "Apache-2.0",
+      "selectedLicense": "Apache-2.0",
+      "authors": ["강동윤 <kdy1997.dev@gmail.com>"],
+      "copyrightHeaders": [],
+      "basis": "License declaration in the checksum-verified published Cargo.toml. Standard license terms are bundled with observed source copyright headers and published author credits. A missing standalone license file or unavailable VCS revision is not itself a conflicting license declaration."
+    },
+    {
+      "name": "swc_ts_fast_strip",
+      "version": "36.0.0",
+      "archiveSha256": "af7939f2933c4e0fbfedc30fcedd8530c557dee7ea7c73bc4bed854c751c476e",
+      "manifestSha256": "bff1fdea5ac88f2ef6627e6cfaa3825a3e6e23e2e1998d4608d74dd251955603",
+      "declaredLicense": "Apache-2.0",
+      "selectedLicense": "Apache-2.0",
+      "authors": ["강동윤 <kdy1997.dev@gmail.com>"],
+      "copyrightHeaders": [],
+      "basis": "License declaration in the checksum-verified published Cargo.toml. Standard license terms are bundled with observed source copyright headers and published author credits. A missing standalone license file or unavailable VCS revision is not itself a conflicting license declaration."
+    },
+    {
+      "name": "swc_visit",
+      "version": "2.0.1",
+      "archiveSha256": "62fb71484b486c185e34d2172f0eabe7f4722742aad700f426a494bb2de232a2",
+      "manifestSha256": "a17bb9706310daa039d9869b05a4d15d36102ced909661176c349d062e0b7da6",
+      "declaredLicense": "Apache-2.0",
+      "selectedLicense": "Apache-2.0",
+      "authors": ["강동윤 <kdy1997.dev@gmail.com>"],
+      "copyrightHeaders": [],
+      "basis": "License declaration in the checksum-verified published Cargo.toml. Standard license terms are bundled with observed source copyright headers and published author credits. A missing standalone license file or unavailable VCS revision is not itself a conflicting license declaration."
+    },
+    {
+      "name": "sys_traits_macros",
+      "version": "0.1.0",
+      "archiveSha256": "181f22127402abcf8ee5c83ccd5b408933fec36a6095cf82cda545634692657e",
+      "manifestSha256": "a4310fbd532dcdb320dd6ad5547fddf978ea1b1d4be9b9400ae3a632b05b40a2",
+      "declaredLicense": "MIT",
+      "selectedLicense": "MIT",
+      "authors": [],
+      "copyrightHeaders": [],
+      "basis": "License declaration in the checksum-verified published Cargo.toml. Standard license terms are bundled with observed source copyright headers and published author credits. A missing standalone license file or unavailable VCS revision is not itself a conflicting license declaration."
+    },
+    {
+      "name": "sys_traits",
+      "version": "0.1.28",
+      "archiveSha256": "88826d6169418c98e8bc52a43f79d50907dfa3e87ba5161930d42c6f980b35ee",
+      "manifestSha256": "1f48ad443e3bdc52ca7ecfbfe871a8b234083d06fe1d4a4cf377227025ffad8e",
+      "declaredLicense": "MIT",
+      "selectedLicense": "MIT",
+      "authors": [],
+      "copyrightHeaders": [],
+      "basis": "License declaration in the checksum-verified published Cargo.toml. Standard license terms are bundled with observed source copyright headers and published author credits. A missing standalone license file or unavailable VCS revision is not itself a conflicting license declaration."
+    },
+    {
+      "name": "valuable",
+      "version": "0.1.0",
+      "archiveSha256": "830b7e5d4d90034032940e4ace0d9a9a057e7a45cd94e6c007832e39edb82f6d",
+      "manifestSha256": "995a2454b4e3e583124d60b694e106ebd193b9742df3e050a6f49e5801b3597b",
+      "declaredLicense": "MIT",
+      "selectedLicense": "MIT",
+      "authors": [],
+      "copyrightHeaders": [],
+      "basis": "License declaration in the checksum-verified published Cargo.toml. Standard license terms are bundled with observed source copyright headers and published author credits. A missing standalone license file or unavailable VCS revision is not itself a conflicting license declaration."
+    },
+    {
+      "name": "winapi-i686-pc-windows-gnu",
+      "version": "0.4.0",
+      "archiveSha256": "ac3b87c63620426dd9b991e5ce0329eff545bccbbb34f3be09ff6fb6ab51b7b6",
+      "manifestSha256": "9652222664ffc7e2a26fdcdebdce0917a455b39d8fbcbf451bf0b011a3067bf7",
+      "declaredLicense": "MIT/Apache-2.0",
+      "selectedLicense": "Apache-2.0",
+      "authors": ["Peter Atashian <retep998@gmail.com>"],
+      "copyrightHeaders": [
+        {
+          "paths": ["build.rs"],
+          "text": "// Copyright © 2016-2018 winapi-rs developers\n// Licensed under the Apache License, Version 2.0\n// <LICENSE-APACHE or http://www.apache.org/licenses/LICENSE-2.0> or the MIT license\n// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your option.\n// All files in the project carrying such notice may not be copied, modified, or distributed\n// except according to those terms."
+        },
+        {
+          "paths": ["src/lib.rs"],
+          "text": "// Copyright © 2016 winapi-rs developers\n// Licensed under the Apache License, Version 2.0\n// <LICENSE-APACHE or http://www.apache.org/licenses/LICENSE-2.0> or the MIT license\n// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your option.\n// All files in the project carrying such notice may not be copied, modified, or distributed\n// except according to those terms."
+        }
+      ],
+      "basis": "License declaration in the checksum-verified published Cargo.toml. Standard license terms are bundled with observed source copyright headers and published author credits. A missing standalone license file or unavailable VCS revision is not itself a conflicting license declaration."
+    },
+    {
+      "name": "winapi-x86_64-pc-windows-gnu",
+      "version": "0.4.0",
+      "archiveSha256": "712e227841d057c1ee1cd2fb22fa7e5a5461ae8e48fa2ca79ec42cfc1931183f",
+      "manifestSha256": "a88605a11db5def9b6cf73398e83b3edb72228cb43ea935729fac5cd33cec22c",
+      "declaredLicense": "MIT/Apache-2.0",
+      "selectedLicense": "Apache-2.0",
+      "authors": ["Peter Atashian <retep998@gmail.com>"],
+      "copyrightHeaders": [
+        {
+          "paths": ["build.rs"],
+          "text": "// Copyright © 2016-2018 winapi-rs developers\n// Licensed under the Apache License, Version 2.0\n// <LICENSE-APACHE or http://www.apache.org/licenses/LICENSE-2.0> or the MIT license\n// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your option.\n// All files in the project carrying such notice may not be copied, modified, or distributed\n// except according to those terms."
+        },
+        {
+          "paths": ["src/lib.rs"],
+          "text": "// Copyright © 2016 winapi-rs developers\n// Licensed under the Apache License, Version 2.0\n// <LICENSE-APACHE or http://www.apache.org/licenses/LICENSE-2.0> or the MIT license\n// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your option.\n// All files in the project carrying such notice may not be copied, modified, or distributed\n// except according to those terms."
+        }
+      ],
+      "basis": "License declaration in the checksum-verified published Cargo.toml. Standard license terms are bundled with observed source copyright headers and published author credits. A missing standalone license file or unavailable VCS revision is not itself a conflicting license declaration."
+    }
+  ],
+  "reviewedLicenseExpressions": [
+    "(Apache-2.0 OR MIT) AND BSD-3-Clause",
+    "(MIT OR Apache-2.0) AND Unicode-3.0",
+    "(MIT OR Apache-2.0) AND Unicode-DFS-2016",
+    "0BSD OR MIT OR Apache-2.0",
+    "Apache-2.0",
+    "Apache-2.0 / MIT",
+    "Apache-2.0 AND ISC",
+    "Apache-2.0 OR BSL-1.0",
+    "Apache-2.0 OR BSL-1.0 OR MIT",
+    "Apache-2.0 OR ISC OR MIT",
+    "Apache-2.0 OR MIT",
+    "Apache-2.0 OR MIT OR Zlib",
+    "Apache-2.0 WITH LLVM-exception",
+    "Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT",
+    "Apache-2.0/MIT",
+    "BSD-2-Clause",
+    "BSD-2-Clause OR Apache-2.0 OR MIT",
+    "BSD-3-Clause",
+    "BSD-3-Clause OR MIT",
+    "BSD-3-Clause/MIT",
+    "BSL-1.0",
+    "CC0-1.0",
+    "CC0-1.0 OR MIT-0 OR Apache-2.0",
+    "ISC",
+    "ISC AND (Apache-2.0 OR ISC)",
+    "ISC AND (Apache-2.0 OR ISC) AND Apache-2.0 AND MIT AND BSD-3-Clause AND (Apache-2.0 OR ISC OR MIT) AND (Apache-2.0 OR ISC OR MIT-0)",
+    "MIT",
+    "MIT OR Apache-2.0",
+    "MIT OR Apache-2.0 OR BSD-1-Clause",
+    "MIT OR Apache-2.0 OR LGPL-2.1-or-later",
+    "MIT OR Apache-2.0 OR Zlib",
+    "MIT OR Zlib OR Apache-2.0",
+    "MIT/Apache-2.0",
+    "MPL-2.0",
+    "MPL-2.0+",
+    "Unicode-3.0",
+    "Unlicense OR MIT",
+    "Unlicense/MIT",
+    "Zlib",
+    "Zlib OR Apache-2.0 OR MIT",
+    "bzip2-1.0.6"
+  ],
+  "customDeclarations": [
+    {
+      "name": "libuv-sys-lite",
+      "version": "1.48.3",
+      "archiveSha256": "10de9b449ef5865c757dc2a0c1b1dde1578adf466db4bb0074e5d83b530164f1",
+      "declaredLicense": "non-standard",
+      "basis": "The published archive LICENSE contains the wrapper MIT notice followed by the libuv license and third-party notices; that original text is retained in denort-license-texts.json."
+    }
+  ]
+}

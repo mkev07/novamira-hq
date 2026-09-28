@@ -54,7 +54,6 @@ import type { DashboardResponse } from "../responses.js";
 import type { RouteContext, RouteHandler } from "../routes.js";
 import { patchSites } from "./sites.js";
 import type { DashboardNotice } from "../views/types.js";
-import { EMPTY_NOTICE } from "../views/types.js";
 import { patchSetupPage } from "./setup.js";
 
 function danger(message: string): DashboardNotice {
@@ -92,19 +91,15 @@ export function createConnectHandler(context: RouteContext): RouteHandler {
           patchToast(stream, {
             level: "neutral",
             message:
-              "Checking whether Novamira is installed, active and ready on this site… Your hosting provider may take 30 seconds or longer. If setup is needed, you will be asked to approve it before any changes.",
+              "Checking whether this site is ready for Novamira authorization… If not, you can review setup before approving any changes.",
           });
-          const existing = await context.setupJobs.inspect(
+          const ready = await context.setupJobs.readyForConnection(
             hostingProfile,
             envId,
             request.signal,
             site.siteUrl,
           );
-          if (
-            !existing?.active ||
-            !existing.aiEnabled ||
-            existing.aiDomain !== site.host
-          ) {
+          if (!ready) {
             await patchSetupPage(
               context,
               stream,
@@ -116,7 +111,11 @@ export function createConnectHandler(context: RouteContext): RouteHandler {
                 jobId: "",
                 job: null,
               },
-              EMPTY_NOTICE,
+              {
+                level: "neutral",
+                message:
+                  "Novamira readiness could not be confirmed. Review setup before approving any changes.",
+              },
             );
             stream.close();
             return;
@@ -148,16 +147,16 @@ export function createConnectHandler(context: RouteContext): RouteHandler {
                   options.profile,
                   options.includeEnvs,
                 );
-          const connected: DashboardNotice = {
+          const authorized: DashboardNotice = {
             level: "ok",
-            message: `Connected. ${site.siteUrl}`,
+            message: `Authorization completed. ${site.siteUrl} Check the connection status below.`,
           };
           if (warm === undefined) {
             // Nothing warm to repaint: say so with the toast and leave the
             // stale listing alone rather than fanning out across the providers.
-            patchToast(stream, connected);
+            patchToast(stream, authorized);
           } else {
-            patchSites(stream, options, warm, connected);
+            patchSites(stream, options, warm, authorized);
           }
         }
       } catch (error) {

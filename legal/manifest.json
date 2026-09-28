@@ -1,16 +1,16 @@
 {
   "schemaVersion": 1,
-  "reviewedAt": "2026-09-21",
-  "coverage": "Application npm dependencies, locked desktop JavaScript dependencies and identified assets. Desktop embedded-runtime review is incomplete; this inventory is not release clearance.",
+  "reviewedAt": "2026-09-28",
+  "coverage": "Application, runtime and native license materials: retained upstream notices plus documented published declarations and standard license terms. Source-audit completeness is tracked separately from release material checks.",
   "desktopReview": {
-    "status": "incomplete",
+    "status": "materials-documented",
     "referenceDenoVersion": "2.9.6",
     "remaining": [
-      "Determine the actual runtime and target-specific dependencies in each compiled artifact; Deno Cargo.lock includes build/test dependencies too.",
-      "Collect notices for all included Rust crates and V8 third-party libraries, plus any redistributed Windows WebView2 components.",
-      "Complete the runtime notice review for the pinned Deno 2.9.6 toolchain before desktop release clearance.",
-      "Provide recipients of HQ binaries with the matching HQ Corresponding Source and build scripts; a private repository link alone is not sufficient for recipients without access."
-    ]
+      "Maintain the source offer and preserve matching source/build materials when publishing a release.",
+      "Revisit declarations, attribution and notices when dependency locks or bundled native artifacts change.",
+      "The target dependency graphs and macOS source-rebuild test are supporting evidence; an exhaustive binary audit or a repeated rebuild on every target is not an automatic release requirement."
+    ],
+    "blockers": []
   },
   "assetDigests": {
     "skills/novamira-site/SKILL.md": "16c5d802c5add2f5737455e78d423d32169d863bd8a75fa5a38db41bb95b8eaa",
@@ -55,12 +55,12 @@
     {
       "id": "novamira-cli",
       "name": "@novamira/cli",
-      "version": "1.3.1",
+      "version": "1.3.2",
       "license": "AGPL-3.0-or-later",
       "scope": "npm runtime",
-      "source": "https://github.com/use-novamira/novamira-cli/tree/v1.3.1",
+      "source": "https://github.com/use-novamira/novamira-cli/tree/v1.3.2",
       "licenseFiles": [],
-      "notes": "Copyright (c) 2026 Ovation S.r.l. Included in npm and desktop, with guide data. The complete AGPL license appears above as HQ's LICENSE. Matching source is the public v1.3.1 tag. Its sole runtime dependency, commander, is inventoried separately."
+      "notes": "Copyright (c) 2026 Ovation S.r.l. Included in npm and desktop, with guide data. The complete AGPL license appears above as HQ's LICENSE. Matching source is the public v1.3.2 tag. Its sole runtime dependency, commander, is inventoried separately."
     },
     {
       "id": "commander",
@@ -211,7 +211,24 @@
       "scope": "desktop native library",
       "source": "https://github.com/webview/webview/tree/c5b19403382ef089f9933ea5331c76aa35414589",
       "licenseFiles": ["licenses/native-webview.txt"],
-      "notes": "Webview uses platform web engines. Platform runtimes and any redistributed Windows WebView2 loader require separate review."
+      "notes": "Webview uses platform web engines. The Windows build embeds the separately listed Microsoft WebView2 loader; the WebView2 Runtime is provided by the operating system or installed separately."
+    },
+    {
+      "id": "webview2-loader",
+      "name": "Microsoft WebView2 Loader",
+      "version": "1.0.1150.38",
+      "license": "BSD-3-Clause",
+      "scope": "Windows desktop native loader",
+      "source": "https://api.nuget.org/v3-flatcontainer/microsoft.web.webview2/1.0.1150.38/microsoft.web.webview2.1.0.1150.38.nupkg",
+      "licenseFiles": ["licenses/webview2-loader.txt"],
+      "artifact": {
+        "filename": "WebView2Loader.dll",
+        "sha256": "184574b9c36b044888644fc1f2b19176e0e76ccc3ddd2f0a5f0d618c88661f86",
+        "packageSha256": "921c004bd1764b585496b2eb3eec0a59a9a98e698246f1d9a3f1c08d1d84ebd5",
+        "packagePath": "build/native/x64/WebView2Loader.dll",
+        "licenseSha256": "0af8f1b807512aae39c2ac1aa4d0cae65cabecb6fd554b8439a5162a0d6eca55"
+      },
+      "notes": "The x64 loader embedded from webview_deno 0.9.0 matches build/native/x64/WebView2Loader.dll in the official Microsoft.Web.WebView2 1.0.1150.38 NuGet archive byte for byte. The package declares LICENSE.txt as its license. This record covers the loader, not the separately installed WebView2 Runtime."
     },
     {
       "id": "deno",

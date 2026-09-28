@@ -59,7 +59,17 @@
 import type { ErrorCode } from "../../errors.js";
 import type { NovamiraSetupResult } from "../../provisioning/index.js";
 import * as ds from "../datastar.js";
-import { getStream, post, seq, set, jsString, signal, not } from "../expr.js";
+import {
+  getStream,
+  post,
+  seq,
+  set,
+  jsString,
+  jsBoolean,
+  signal,
+  not,
+  or,
+} from "../expr.js";
 import { classAttr, hrefAttr, html, idAttr, url, type Html } from "../html.js";
 import type {
   SetupJobEvent,
@@ -254,10 +264,10 @@ function renderActionPanel(view: SetupView): Html {
   );
   return html`<section class="panel action-panel"><p class="field-help">${SETUP_DESCRIPTION}</p><label class="toggle setup-ai-toggle"><input type="checkbox"${ds.bind(
     "setup.enableAiAbilities",
-  )}><span>I understand and approve enabling AI Abilities on this site</span></label><p class="field-help">Approval is required to start setup. Without it, nothing will be installed or changed.</p><p class="field-help setup-warning"><strong>Security note:</strong> ${AI_ABILITIES_WARNING}</p><button class="button primary" type="button" disabled${ds.attrs({ disabled: not(signal("setup.enableAiAbilities")) })}${ds.on(
+  )}><span>I understand and approve enabling AI Abilities on this site</span></label><p class="field-help">Approval is required to start setup. Without it, nothing will be installed or changed.</p><p class="field-help setup-warning"><strong>Security note:</strong> ${AI_ABILITIES_WARNING}</p><button class="button primary" type="button" disabled${ds.attrs({ disabled: or(not(signal("setup.enableAiAbilities")), signal("setup.submitting")) })}${ds.indicator("setup.submitting")}${ds.on(
     "click",
-    action,
-  )}>Start Setup</button></section>`;
+    seq(set("setup.submitting", jsBoolean(true)), action),
+  )}><span${ds.classes({ hidden: signal("setup.submitting") })}>Start Setup</span><span class="loading-inline ds-toggle"${ds.classes({ open: signal("setup.submitting") })} role="status">Starting setup…</span></button></section>`;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -360,7 +370,7 @@ function renderSetupResult(result: NovamiraSetupResult): Html {
         : "not checked",
   )}</dl></details>${result.warnings.map(
     (warning) => html`<div class="notice warn">${warning.message}</div>`,
-  )}<div class="setup-connect"><h3>Finish adding this site</h3><p>Authorize access to finish adding this site.</p><button class="button primary" type="button"${ds.on("click", seq(set("cliSites.url", jsString(result.siteUrl)), set("cliSites.name", jsString("")), post(url("/_dashboard/site-profiles/connect", { unified: true }), { include: ["cliSites"] })))}${ds.indicator("cliSites.loading")}${ds.attrs({ disabled: signal("cliSites.loading") })}>Authorize access</button><p class="field-help" hidden${ds.attrs({ hidden: not(signal("cliSites.loading")) })}>Waiting for authorization in your browser…</p></div></section>`;
+  )}<div class="setup-connect"><h3>Finish adding this site</h3><p>Authorize access to finish adding this site.</p><button class="button primary" type="button"${ds.on("click", seq(set("cliSites.url", jsString(result.siteUrl)), set("cliSites.name", jsString("")), post(url("/_dashboard/site-profiles/connect", { unified: true }), { include: ["cliSites"] })))}${ds.indicator("cliSites.loading")}${ds.attrs({ disabled: signal("cliSites.loading") })}>Authorize access</button><p class="field-help" hidden${ds.attrs({ hidden: not(signal("cliSites.loading")) })}>Complete authorization in your browser if prompted. Finishing and saving the connection may take a moment.</p></div></section>`;
 }
 
 /** `prefix + value`, or nothing when the value is absent. */

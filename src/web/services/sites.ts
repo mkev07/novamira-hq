@@ -223,8 +223,8 @@ interface CacheEntry {
 /**
  * `includeEnvs` and the profile name, joined by a NUL.
  *
- * A profile name matches `[A-Za-z0-9][A-Za-z0-9._-]{0,63}` and so can never
- * contain a NUL, which makes the encoding injective — `("a", true)` and
+ * A validated profile name can never contain a NUL, which makes the encoding
+ * injective — `("a", true)` and
  * `("a\01", false)` cannot collide the way a `:` separator would allow.
  *
  * The separator is written `\u0000` rather than as a raw byte. A literal NUL
@@ -557,6 +557,7 @@ export function createSitesService(options: SitesServiceOptions): SitesService {
 
     envResolver: () => {
       const known = new Map<string, Map<string, Map<string, EnvDisplay>>>();
+      const pleskInstallations = new Map<string, Map<string, EnvDisplay>>();
       for (const group of warmAll()?.groups ?? []) {
         for (const site of group.sites) {
           for (const env of site.environments ?? []) {
@@ -566,15 +567,25 @@ export function createSitesService(options: SitesServiceOptions): SitesService {
             known.set(group.profile, bySite);
             const byEnv = bySite.get(site.id) ?? new Map<string, EnvDisplay>();
             bySite.set(site.id, byEnv);
-            byEnv.set(env.id, {
+            const display = {
               name: displayLabel(env.displayName, env.name, env.id),
               domain: env.primaryDomain ?? "",
-            });
+            };
+            byEnv.set(env.id, display);
+            if (group.provider === "plesk" && env.id.startsWith("wp:")) {
+              const byInstallation =
+                pleskInstallations.get(group.profile) ??
+                new Map<string, EnvDisplay>();
+              pleskInstallations.set(group.profile, byInstallation);
+              byInstallation.set(env.id, display);
+            }
           }
         }
       }
       return ({ profile, siteId, envId, storedName }) => {
-        const found = known.get(profile)?.get(siteId)?.get(envId);
+        const found =
+          known.get(profile)?.get(siteId)?.get(envId) ??
+          pleskInstallations.get(profile)?.get(envId);
         if (found !== undefined) return found;
         if (storedName !== "") return { name: storedName, domain: "" };
         return { name: envId, domain: "" };

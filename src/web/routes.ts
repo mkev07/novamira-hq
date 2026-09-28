@@ -407,6 +407,14 @@ function pageExtras(
     const profile = (request.query.get("profile") ?? "").trim();
     const siteId = (request.query.get("site") ?? "").trim();
     const site = context.sites.resolveSite(profile, siteId);
+    const pleskGroup = warm?.groups.find(
+      (group) => group.profile === profile && group.provider === "plesk",
+    );
+    const targetEnvs = pleskGroup
+      ? pleskGroup.sites
+          .flatMap((entry) => entry.environments ?? [])
+          .filter((env) => env.id.startsWith("wp:"))
+      : (site?.envs ?? []);
     const requestedSource = (request.query.get("source") ?? "").trim();
     const sourceEnvId = site?.envs.some(
       (environment) => environment.id === requestedSource,
@@ -417,10 +425,10 @@ function pageExtras(
     const targetEnvId =
       sourceEnvId !== "" &&
       requestedTarget !== sourceEnvId &&
-      site?.envs.some((environment) => environment.id === requestedTarget)
+      targetEnvs.some((environment) => environment.id === requestedTarget)
         ? requestedTarget
-        : sourceEnvId !== "" && site?.envs.length === 2
-          ? (site.envs.find((environment) => environment.id !== sourceEnvId)
+        : sourceEnvId !== "" && targetEnvs.length === 2
+          ? (targetEnvs.find((environment) => environment.id !== sourceEnvId)
               ?.id ?? "")
           : "";
     return {
@@ -432,6 +440,8 @@ function pageExtras(
         // when the cache is cold (`server.go:926`).
         siteLabel: site?.label ?? siteId,
         envs: site?.envs ?? [],
+        targetEnvs,
+        plesk: pleskGroup !== undefined,
         sourceEnvId,
         targetEnvId,
       },
@@ -491,13 +501,16 @@ function setupExtras(
 
 function pageHandler(context: RouteContext, page: DashboardPage): RouteHandler {
   return async (request) => {
-    const view = await context.loadConfigView();
     const reviewNotice = request.query.get("review-notice") === "1";
-    if (
-      reviewNotice ||
-      (context.appAcknowledgement &&
-        !(await context.appAcknowledgement.accepted()))
-    ) {
+    // Both reads verify separate local files. Run them together so a Windows
+    // navigation does not wait for three serial PowerShell ACL checks.
+    const [view, acknowledged] = await Promise.all([
+      context.loadConfigView(),
+      reviewNotice || !context.appAcknowledgement
+        ? Promise.resolve(true)
+        : context.appAcknowledgement.accepted(),
+    ]);
+    if (reviewNotice || !acknowledged) {
       const signals = defaultDashboardSignals(context.token);
       return htmlResponse(
         renderDocument({

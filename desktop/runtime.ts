@@ -55,11 +55,51 @@ export async function prepareCommandPath(): Promise<void> {
   Deno.env.set("PATH", [...new Set(entries)].join(":"));
 }
 
-/** A packaged Mac app must use its bundled library, never a network fallback. */
-export function prepareBundledWebview(): void {
-  if (Deno.build.os !== "darwin") return;
+/** Prepare native webview loading independently of the launch directory. */
+export async function prepareBundledWebview(): Promise<() => void> {
+  if (Deno.build.os === "windows") {
+    // Upstream @webview/webview writes WebView2Loader.dll to `./` at import
+    // time. Shortcuts and elevated launchers may start in System32, where a
+    // regular user cannot write. Its native files must also work without a
+    // network or a populated Deno cache.
+    const previous = Deno.cwd();
+    const stage = Deno.makeTempDirSync({ prefix: "novamira-hq-webview-" });
+    try {
+      const specifier =
+        new URL("../dist/config/file-security.js", import.meta.url).href;
+      const { defaultFileSecurity } = (await import(
+        specifier
+      )) as typeof import("../dist/config/file-security.js");
+      await defaultFileSecurity().secureDirectory(stage);
+      for (const filename of ["webview.dll", "WebView2Loader.dll"]) {
+        const asset = new URL(
+          `../dist-desktop/native-windows/${filename}`,
+          import.meta.url,
+        );
+        Deno.writeFileSync(join(stage, filename), Deno.readFileSync(asset));
+      }
+      Deno.env.set("PLUGIN_URL", pathToFileURL(`${stage}/`).href);
+      Deno.chdir(stage);
+    } catch (error) {
+      Deno.removeSync(stage, { recursive: true });
+      throw error;
+    }
+    return () => {
+      try {
+        Deno.chdir(previous);
+      } catch {
+        try {
+          Deno.chdir(dirname(stage));
+        } catch { /* The process is exiting; never skip server shutdown. */ }
+      }
+      try {
+        Deno.removeSync(stage, { recursive: true });
+      } catch { /* A loaded DLL may remain locked until the process exits. */ }
+    };
+  }
+  if (Deno.build.os !== "darwin") return () => {};
   const contents = dirname(dirname(Deno.execPath()));
-  if (!contents.endsWith(".app/Contents")) return;
+  if (!contents.endsWith(".app/Contents")) return () => {};
   const frameworks = join(contents, "Frameworks");
   const file = join(frameworks, `libwebview.${Deno.build.arch}.dylib`);
   if (!Deno.statSync(file).isFile) {
@@ -68,6 +108,7 @@ export function prepareBundledWebview(): void {
     );
   }
   Deno.env.set("PLUGIN_URL", pathToFileURL(`${frameworks}/`).href);
+  return () => {};
 }
 
 /** Only this fixed local download is exposed to the webview, never arbitrary URLs. */

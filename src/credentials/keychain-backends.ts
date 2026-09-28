@@ -20,6 +20,10 @@ export const CREDENTIAL_LABEL = "Novamira HQ";
 // five-second command default is not an interactive authorization deadline.
 export const MACOS_KEYCHAIN_TIMEOUT_MS = 120_000;
 
+// Windows PowerShell may need to initialize Add-Type and the Credential
+// Manager service after sign-in. Five seconds is too short for that cold path.
+export const WINDOWS_CREDENTIAL_TIMEOUT_MS = 30_000;
+
 class SerialCommandExecutor implements CommandExecutor {
   private pending: Promise<unknown> = Promise.resolve();
 
@@ -379,6 +383,14 @@ public static class NovamiraHqCredential {
 const WINDOWS_NOT_FOUND = "__NOVAMIRA_HQ_NOT_FOUND__";
 
 export class WindowsCredentialManagerBackend extends CommandCredentialBackend {
+  constructor(
+    executor: CommandExecutor = new SpawnCommandExecutor(
+      WINDOWS_CREDENTIAL_TIMEOUT_MS,
+    ),
+  ) {
+    super(executor);
+  }
+
   async probe(): Promise<boolean> {
     return this.available(
       "powershell.exe",
@@ -416,19 +428,21 @@ export class WindowsCredentialManagerBackend extends CommandCredentialBackend {
       "Add-Type -TypeDefinition $env:NOVAMIRA_HQ_CREDENTIAL_SOURCE",
       `$action=${powerShellLiteral(action)}`,
       `$target=${powerShellLiteral(target)}`,
-      "if($action -eq 'write'){[NovamiraHqCredential]::Write($target,[Console]::In.ReadToEnd())}",
-      `elseif($action -eq 'read'){$v=[NovamiraHqCredential]::Read($target);if($null -eq $v){Write-Output '${WINDOWS_NOT_FOUND}'}else{[Console]::Out.Write($v)}}`,
-      "else{[NovamiraHqCredential]::Delete($target)}",
+      "if($action -eq 'write'){[NovamiraHqCredential]::Write($target,[Console]::In.ReadToEnd())}" +
+        `elseif($action -eq 'read'){$v=[NovamiraHqCredential]::Read($target);if($null -eq $v){Write-Output '${WINDOWS_NOT_FOUND}'}else{[Console]::Out.Write($v)}}` +
+        "else{[NovamiraHqCredential]::Delete($target)}",
     ].join(";");
-    // Source is fixed code, not secret data. The secret is supplied only on stdin.
+    // PowerShell strips double quotes from a -Command argument on Windows.
+    // Passing C# source through the environment preserves its DllImport strings;
+    // only the fixed script and non-secret target travel in argv. The secret
+    // remains on stdin and is never placed in the environment or command line.
+    const environment = powerShellEnvironment();
+    environment.NOVAMIRA_HQ_CREDENTIAL_SOURCE = WINDOWS_CREDENTIAL_SCRIPT;
     return this.executor.execute(
       "powershell.exe",
-      [
-        ...POWERSHELL_PREFIX,
-        `$env:NOVAMIRA_HQ_CREDENTIAL_SOURCE=@'\n${WINDOWS_CREDENTIAL_SCRIPT}\n'@;${command}`,
-      ],
+      [...POWERSHELL_PREFIX, command],
       stdin,
-      powerShellEnvironment(),
+      environment,
     );
   }
 }

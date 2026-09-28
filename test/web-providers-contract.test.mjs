@@ -349,9 +349,10 @@ test("2: the form chooses a provider before requesting account details", async (
     ">Connect hosting account</button>",
     'data-class="{open: $providerForm.open}"',
     "Step 1 of 2",
-    "Choose your hosting provider",
+    "Choose your hosting service or control panel",
     ">Kinsta</strong>",
     ">Cloudways</strong>",
+    ">Plesk</strong>",
     "Step 2 of 2",
     "Change provider",
     'data-class="{hidden: $providerForm.detailsOpen}"',
@@ -366,6 +367,9 @@ test("2: the form chooses a provider before requesting account details", async (
     "Kinsta company ID",
     "Paste the Rocket.net password.",
     "Paste a Cloudways Access Token. Find it under Profile → API Integration → Create Access Token.",
+    "Plesk panel URL",
+    'data-bind="providerForm.apiBaseUrl"',
+    "Without it, Novamira HQ lists hosted domains.",
     ">Cancel</button>",
     'data-bind="providerForm.companyId"',
     'autocomplete="new-password"',
@@ -394,6 +398,7 @@ test("2b: provider choices can be shuffled without favoring the catalog order", 
     "instawp",
     "kinsta",
     "pantheon",
+    "plesk",
     "pressable",
     "rocketnet",
     "wpengine",
@@ -627,12 +632,41 @@ test("7: saving onto an existing name without force is Go's Edit notice", async 
     apiBaseUrl: "",
     force: false,
   });
-  const toast = recorder.find("main").markup;
-  assert.ok(toast.includes("Open it in Edit"));
-  assert.ok(toast.includes("danger"));
-  // No signal patch on the failure path: the operator's values stay in the form.
-  assert.equal(recorder.signals.length, 0);
+  const flash = recorder.find("provider-flash").markup;
+  assert.ok(flash.includes("Open it in Edit"));
+  assert.ok(flash.includes("danger"));
+  assert.deepEqual(recorder.signals, [
+    { providerSaving_6163636f756e74: false },
+  ]);
+  assert.equal(recorder.find("main"), undefined);
   assert.ok(!recorder.body.includes(SECRET));
+});
+
+test("an invalid account name reports its field and permits a corrected retry", async () => {
+  const { server, store } = await fixture();
+  const form = {
+    provider: "kinsta",
+    credentialValue: SECRET,
+    credentialEnv: "",
+    companyId: "",
+    apiBaseUrl: "",
+    force: false,
+  };
+  const failed = await save(server, { ...form, profile: "bad name" });
+  assert.match(failed.recorder.find("provider-flash").markup, /Account name/);
+  assert.deepEqual(failed.recorder.signals, [
+    { providerSaving_6163636f756e74: false },
+  ]);
+  assert.equal(failed.recorder.find("main"), undefined);
+  assert.ok(!failed.recorder.body.includes(SECRET));
+  assert.deepEqual(await store.listHostingProfiles(), []);
+
+  const corrected = await save(server, { ...form, profile: "Città" });
+  assert.equal(corrected.recorder.signals[0].providerForm.profile, "");
+  assert.deepEqual(
+    (await store.listHostingProfiles()).map(({ name }) => name),
+    ["Città"],
+  );
 });
 
 test("saving checks the connection immediately and reports an unverified saved account honestly", async () => {

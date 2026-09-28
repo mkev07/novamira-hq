@@ -178,8 +178,8 @@ function stateFor(result: ChildResult): {
 export function createSiteProfileService(
   options: SiteProfileServiceOptions,
 ): SiteProfileService {
-  const perChildTimeoutMs = options.perChildTimeoutMs ?? 10_000;
-  const overallDeadlineMs = options.overallDeadlineMs ?? 20_000;
+  const perChildTimeoutMs = options.perChildTimeoutMs ?? 30_000;
+  const overallDeadlineMs = options.overallDeadlineMs ?? 45_000;
   const actionTimeoutMs = options.actionTimeoutMs ?? PROFILE_ACTION_TIMEOUT_MS;
   const concurrency = options.concurrency ?? 4;
   const maxStdoutBytes = options.maxStdoutBytes ?? DEFAULT_MAX_STDOUT_BYTES;

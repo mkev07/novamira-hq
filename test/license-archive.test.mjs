@@ -63,4 +63,12 @@ test("notice paths cover original variants, without treating source files as not
     assert.equal(isNoticePath(path), true, path);
   assert.equal(isNoticePath("src/licensing.rs"), false);
   assert.equal(isNoticePath("src/main.rs"), false);
+  assert.equal(
+    isNoticePath("v8/src/compiler/turboshaft/copying-phase.cc"),
+    false,
+  );
+  assert.equal(
+    isNoticePath("v8/src/compiler/turboshaft/copying-phase.h"),
+    false,
+  );
 });

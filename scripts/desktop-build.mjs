@@ -24,6 +24,7 @@ import { arch, argv, exit, platform, stderr, stdout } from "node:process";
 import { fileURLToPath, URL } from "node:url";
 
 import { generateIcons, HICOLOR_SIZES, ICON_NAME } from "./desktop-icons.mjs";
+import { installWindowsWebview } from "./windows-native.mjs";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 const outDir = join(root, "dist-desktop");
@@ -82,6 +83,10 @@ const icons = await generateIcons({
   outDir: iconDir,
 });
 stdout.write(`Generated ${icons.length} desktop icons in ${iconDir}\n`);
+
+if (platform === "win32") {
+  await installWindowsWebview(join(outDir, "native-windows"));
+}
 
 run("deno", [
   "task",

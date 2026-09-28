@@ -255,6 +255,7 @@ async function fixture(options = {}) {
 
   const connectCalls = [];
   const renameCalls = [];
+  const inventoryCalls = [];
   const listing = options.siteProfiles ?? {
     profiles: [],
     checkedAt: NOW,
@@ -282,15 +283,18 @@ async function fixture(options = {}) {
           options.cliAvailable ?? true,
           options.profiles ?? {},
         ),
-      siteInventory: async (queries) => ({
-        connections: snapshotFor(
-          queries,
-          options.states ?? {},
-          options.cliAvailable ?? true,
-          options.profiles ?? {},
-        ),
-        profiles: listing,
-      }),
+      siteInventory: async (queries) => {
+        inventoryCalls.push(queries);
+        return {
+          connections: snapshotFor(
+            queries,
+            options.states ?? {},
+            options.cliAvailable ?? true,
+            options.profiles ?? {},
+          ),
+          profiles: listing,
+        };
+      },
       listProfiles: async () => listing,
       connect: async (siteUrl, name) => {
         connectCalls.push(name === undefined ? siteUrl : `${siteUrl} ${name}`);
@@ -316,7 +320,14 @@ async function fixture(options = {}) {
     },
   });
   servers.push(server);
-  return { server, store, listCalls, connectCalls, renameCalls };
+  return {
+    server,
+    store,
+    listCalls,
+    connectCalls,
+    renameCalls,
+    inventoryCalls,
+  };
 }
 
 function request(path, options = {}) {
@@ -916,7 +927,7 @@ test("10: supported hosting rows have one connect action with inspection context
   ].map((match) => match[1]);
   assert.ok(indicators.length > 1);
   assert.equal(new Set(indicators).size, indicators.length);
-  assert.match(markup, /Preparing connection…/);
+  assert.match(markup, /Connecting…/);
   assert.equal(markup.split("hosting_profile=prod").length - 1, 3);
   assert.ok(!markup.includes("hosting_profile=plain"));
   assert.ok(!markup.includes("Install / check Novamira"));
@@ -958,12 +969,12 @@ test("11: a successful connect repaints the sites fragments and calls no provide
   assert.ok(
     recorder
       .find("toast")
-      .markup.includes("Connected. https://env-a.example.com"),
+      .markup.includes("Authorization completed. https://env-a.example.com"),
   );
   assert.ok(
     !recorder
       .find("sites-result")
-      .markup.includes("Connected. https://env-a.example.com"),
+      .markup.includes("Authorization completed. https://env-a.example.com"),
   );
 });
 
@@ -1010,7 +1021,7 @@ test("14: a connect whose cache entry has expired says so with the toast alone",
     connectRequest("url=https%3A%2F%2Fenv-a.example.com&profile=__all__"),
   );
   assert.deepEqual(recorder.order, ["toast/outer"]);
-  assert.ok(recorder.find("toast").markup.includes("Connected."));
+  assert.ok(recorder.find("toast").markup.includes("Authorization completed."));
   assert.equal(listCalls.length, 0, "connect never lists sites");
 });
 
@@ -1312,6 +1323,33 @@ test("19: adding a CLI site sends the optional custom name", async () => {
   assert.ok(main.includes('href="/sites">Open Sites</a>'));
   assert.ok(main.includes('href="/sites?new=cli">Connect another site</a>'));
   assert.ok(!recorder.find("toast").markup.includes("Connected."));
+});
+
+test("a completed CLI login shows success without refreshing every site status", async () => {
+  const { server, connectCalls, inventoryCalls, listCalls } = await fixture();
+  await sse(server, sitesRequest());
+  const beforeInventory = inventoryCalls.length;
+  const beforeProviders = listCalls.length;
+
+  const { recorder } = await sse(
+    server,
+    authorized("/_dashboard/site-profiles/connect?unified=true", {
+      method: "POST",
+      body: JSON.stringify({ cliSites: { url: "https://example.com" } }),
+    }),
+  );
+  assert.deepEqual(connectCalls, ["https://example.com"]);
+  assert.ok(recorder.find("main").markup.includes("Site connected"));
+  assert.equal(inventoryCalls.length, beforeInventory);
+  assert.equal(listCalls.length, beforeProviders);
+
+  await sse(server, sitesRequest());
+  assert.equal(inventoryCalls.length, beforeInventory + 1);
+  assert.equal(
+    listCalls.length,
+    beforeProviders,
+    "the hosting cache stays warm",
+  );
 });
 
 test("a CLI profile on a site without a compatible Novamira setup is explicit", async () => {

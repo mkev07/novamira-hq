@@ -135,6 +135,8 @@ export interface UpdateSignals {
  */
 export interface SetupSignals {
   readonly enableAiAbilities: boolean;
+  /** Immediate local feedback while the setup-start request is in flight. */
+  readonly submitting: boolean;
 }
 
 export interface DashboardSignals {
@@ -336,7 +338,7 @@ export function defaultDashboardSignals(
     },
     diagnostics: { profile: "" },
     updates: { loading: false, installing: false },
-    setup: { enableAiAbilities: false },
+    setup: { enableAiAbilities: false, submitting: false },
   };
 }
 

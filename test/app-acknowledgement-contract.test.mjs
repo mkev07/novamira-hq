@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 import assert from "node:assert/strict";
-import { mkdtemp, readFile, rm, stat } from "node:fs/promises";
+import { chmod, mkdtemp, readFile, rm, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -34,6 +34,20 @@ test("app acknowledgement is lazy, persistent and private", async (t) => {
     );
 });
 
+test("onboarding protects the shared HQ root before writing state", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "hq-app-ack-root-"));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  if (process.platform !== "win32") await chmod(root, 0o755);
+  const paths = platformPaths({ NOVAMIRA_HQ_HOME: root });
+  const security = defaultFileSecurity();
+  await createAppAcknowledgement(paths, security).accept();
+  assert.equal(await security.verifyDirectory(root), true);
+  assert.equal(
+    await createAppAcknowledgement(paths, security).accepted(),
+    true,
+  );
+});
+
 test("Windows private storage retains its owner and removes inherited and explicit access", async () => {
   const calls = [];
   const security = new WindowsFileSecurity({
@@ -52,11 +66,93 @@ test("Windows private storage retains its owner and removes inherited and explic
     assert.equal(command, "powershell.exe");
     assert.match(script, /GetOwner\(/);
     assert.match(script, /owner\.Value -ne \$sid\.Value/);
-    assert.doesNotMatch(script, /SetOwner\(/);
+    assert.match(script, /owner\.Value -ne 'S-1-5-32-544'/);
+    assert.match(
+      script,
+      /principal\.IsInRole\(\[System\.Security\.Principal\.WindowsBuiltInRole\]::Administrator\)/,
+    );
+    assert.match(script, /\$actual\.SetOwner\(\$sid\)/);
     assert.match(script, /SetAccessRuleProtection\(\$true,\$false\)/);
     assert.match(script, /RemoveAccessRuleSpecific\(/);
-    assert.match(script, /Set-Acl -LiteralPath \$path/);
-    assert.match(script, /\$actual=Get-Acl -LiteralPath \$path\};\$rules=/);
+    assert.match(
+      script,
+      /GetAccessControl\(\[System\.Security\.AccessControl\.AccessControlSections\]'Access,Owner'\)/,
+    );
+    assert.match(script, /\$item\.SetAccessControl\(\$actual\)/);
+    assert.doesNotMatch(script, /Set-Acl|Audit/);
+  }
+});
+
+test("Windows ACL reads share one process but retain independent verdicts", async () => {
+  const calls = [];
+  const security = new WindowsFileSecurity({
+    async run() {
+      assert.fail("verification should use the bounded output runner");
+    },
+    async runOutput(command, args) {
+      calls.push({ command, script: args.at(-1) });
+      return { code: 0, stdout: "1\n0\n1\n" };
+    },
+  });
+  const answers = await Promise.all([
+    security.verifyDirectory("C:\\private"),
+    security.verifyFile("C:\\private\\config.json"),
+    security.verifyFile("C:\\private\\accepted.json"),
+  ]);
+  assert.deepEqual(answers, [true, false, true]);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].command, "powershell.exe");
+  assert.match(calls[0].script, /AreAccessRulesProtected/);
+  assert.match(calls[0].script, /GetOwner\(/);
+  assert.doesNotMatch(calls[0].script, /SetAccessControl|Set-Acl/);
+});
+
+test("Windows ACL reads prefer the reusable verifier when available", async () => {
+  const calls = [];
+  const security = new WindowsFileSecurity({
+    async run() {
+      assert.fail("verification should use the reusable worker");
+    },
+    async runOutput() {
+      assert.fail("verification should not start another PowerShell process");
+    },
+    async verifyAclBatch(checks) {
+      calls.push(checks);
+      return [true, false];
+    },
+  });
+  assert.deepEqual(
+    await Promise.all([
+      security.verifyDirectory("C:\\private"),
+      security.verifyFile("C:\\private\\config.json"),
+    ]),
+    [true, false],
+  );
+  assert.deepEqual(calls, [
+    [
+      { path: "C:\\private", directory: true },
+      { path: "C:\\private\\config.json", directory: false },
+    ],
+  ]);
+});
+
+test("Windows ACL batch refuses incomplete or unreadable verdicts", async () => {
+  for (const stdout of ["1\n", "1\nE\n", "maybe\n0\n"]) {
+    const security = new WindowsFileSecurity({
+      async run() {
+        assert.fail("verification should use the output runner");
+      },
+      async runOutput() {
+        return { code: 0, stdout };
+      },
+    });
+    await assert.rejects(
+      Promise.all([
+        security.verifyDirectory("C:\\private"),
+        security.verifyFile("C:\\private\\config.json"),
+      ]),
+      /could not verify storage ACLs/,
+    );
   }
 });
 

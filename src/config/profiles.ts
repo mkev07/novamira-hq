@@ -241,16 +241,20 @@ export class ConfigStore {
   }
 
   async getHostingProfile(name: string): Promise<HostingProfile | undefined> {
-    return lookup((await this.load()).hostingProfiles, name);
+    return lookup(
+      (await this.load()).hostingProfiles,
+      validateProfileName(name),
+    );
   }
 
   /** Like {@link ConfigStore.getHostingProfile}, but fails with `profile_not_found`. */
   async requireHostingProfile(name: string): Promise<HostingProfileEntry> {
     const document = await this.load();
-    const profile = lookup(document.hostingProfiles, name);
+    const key = validateProfileName(name);
+    const profile = lookup(document.hostingProfiles, key);
     if (profile === undefined)
       throw profileNotFound(name, sortedNames(document.hostingProfiles));
-    return { name, profile };
+    return { name: key, profile };
   }
 
   /**
@@ -269,9 +273,10 @@ export class ConfigStore {
         { details: { profiles } },
       );
     }
-    const profile = lookup(document.hostingProfiles, requested);
+    const key = validateProfileName(requested);
+    const profile = lookup(document.hostingProfiles, key);
     if (profile === undefined) throw profileNotFound(requested, profiles);
-    return { name: requested, profile };
+    return { name: key, profile };
   }
 
   async upsertHostingProfile(
@@ -458,12 +463,13 @@ export class ConfigStore {
    */
   private async assertTrustedStorage(): Promise<boolean> {
     const directory = dirname(this.configFile);
-    const directoryExists = await this.verifyStoragePath(
-      directory,
-      "directory",
-    );
-    if (!directoryExists) return false;
-    return this.verifyStoragePath(this.configFile, "file");
+    // On Windows each ACL verification starts a PowerShell process. The two
+    // checks are independent, and no file content is read until both succeed.
+    const [directoryExists, fileExists] = await Promise.all([
+      this.verifyStoragePath(directory, "directory"),
+      this.verifyStoragePath(this.configFile, "file"),
+    ]);
+    return directoryExists && fileExists;
   }
 
   private async verifyStoragePath(

@@ -145,6 +145,7 @@ export function createSetupStartHandler(context: RouteContext): RouteHandler {
             "The setup job was not found after it was started.",
           );
         }
+        stream.patchSignals({ setup: { submitting: false } });
         await patchSetupPage(
           context,
           stream,
@@ -160,6 +161,7 @@ export function createSetupStartHandler(context: RouteContext): RouteHandler {
           path: "/_dashboard/setup/start",
           code: cliError.code,
         });
+        stream.patchSignals({ setup: { submitting: false } });
         await patchSetupPage(
           context,
           stream,

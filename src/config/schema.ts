@@ -20,6 +20,7 @@ export const PROVIDER_KINDS = [
   "rocketnet",
   "hostinger",
   "cloudways",
+  "plesk",
 ] as const;
 
 export type ProviderKind = (typeof PROVIDER_KINDS)[number];
@@ -57,6 +58,10 @@ export const DEFAULT_HOSTINGER_CREDENTIAL_ENV = "HOSTINGER_API_TOKEN";
 export const DEFAULT_CLOUDWAYS_API_BASE_URL =
   "https://api.cloudways.com/api/v2";
 export const DEFAULT_CLOUDWAYS_CREDENTIAL_ENV = "CLOUDWAYS_ACCESS_TOKEN";
+// Plesk is self-hosted. This placeholder is never contacted: a profile must
+// provide its own panel URL before the adapter makes any request.
+export const DEFAULT_PLESK_API_BASE_URL = "https://plesk.invalid:8443";
+export const DEFAULT_PLESK_CREDENTIAL_ENV = "PLESK_API_KEY";
 
 export interface ProviderDefaults {
   readonly apiBaseUrl: string;
@@ -109,6 +114,10 @@ export const PROVIDER_DEFAULTS: Readonly<
   cloudways: {
     apiBaseUrl: DEFAULT_CLOUDWAYS_API_BASE_URL,
     credentialEnv: DEFAULT_CLOUDWAYS_CREDENTIAL_ENV,
+  },
+  plesk: {
+    apiBaseUrl: DEFAULT_PLESK_API_BASE_URL,
+    credentialEnv: DEFAULT_PLESK_CREDENTIAL_ENV,
   },
 };
 
@@ -225,6 +234,7 @@ export function emptyConfigDocument(): ConfigDocument {
   };
 }
 
+const HOSTING_NAME_PATTERN = /^[\p{L}\p{N}][\p{L}\p{N}\p{M}._-]*$/u;
 const NAME_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/;
 const ENV_NAME_PATTERN = /^[A-Za-z_][A-Za-z0-9_]*$/;
 
@@ -327,13 +337,17 @@ function optionalBoolean(
 
 /** Names double as map keys, lock keys, and keychain account components. */
 export function validateProfileName(name: string): string {
-  if (!NAME_PATTERN.test(name)) {
+  const normalized = name.normalize("NFC");
+  if (
+    !HOSTING_NAME_PATTERN.test(normalized) ||
+    Array.from(normalized).length > 64
+  ) {
     throw new CliError(
       "usage_error",
-      "Hosting profile name must use 1-64 letters, numbers, dots, dashes, or underscores.",
+      "Account name must use 1-64 letters (including accents), numbers, dots, dashes, or underscores.",
     );
   }
-  return name;
+  return normalized;
 }
 
 export function validateSavedPushName(name: string): string {
@@ -534,7 +548,8 @@ function parseRecordOf<T>(
   const record = requireRecord(value, path);
   const parsed = emptyNameMap<T>();
   for (const [key, entry] of Object.entries(record)) {
-    validateKey(key);
+    if (validateKey(key) !== key)
+      throw schemaError(`${path}.${key}`, "must use normalized characters.");
     parsed[key] = parseEntry(entry, `${path}.${key}`, key);
   }
   return parsed;

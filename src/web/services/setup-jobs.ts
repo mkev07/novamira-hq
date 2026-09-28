@@ -54,11 +54,6 @@
  */
 
 import { randomBytes } from "node:crypto";
-import {
-  inspectExistingNovamira,
-  type ExistingNovamira,
-} from "../../provisioning/existing.js";
-
 import { asCliError, CliError, type ErrorCode } from "../../errors.js";
 import type { HostingClientFactory } from "../../hosting/factory.js";
 import {
@@ -112,12 +107,12 @@ export interface SetupJobStartInput {
 }
 
 export interface SetupJobService {
-  inspect(
+  readyForConnection(
     profile: string,
     envId: string,
     signal: AbortSignal,
-    siteUrl?: string,
-  ): Promise<ExistingNovamira | undefined>;
+    siteUrl: string,
+  ): Promise<boolean>;
   /**
    * Start a run, or return the id of the one already running against this
    * target. Rejects when the hosting profile cannot be resolved.
@@ -300,29 +295,28 @@ export function createSetupJobService(
   };
 
   return {
-    inspect: async (profile, envId, signal, siteUrl) => {
+    readyForConnection: async (profile, envId, signal, siteUrl) => {
       if (shuttingDown) throw unavailable();
-      const client = await options.hosting.clientFromProfile(profile);
+      // This is the Connect preflight, not provisioning: do not queue several
+      // remote WP-CLI calls before opening the authorization browser. A valid
+      // protected-resource document is sufficient to proceed; otherwise show
+      // Setup, whose explicit job performs the full provider-side inspection
+      // before making any change.
+      await options.hosting.clientFromProfile(profile);
       signal.throwIfAborted();
-      const existing = await inspectExistingNovamira(client, envId, {
-        intervalSeconds: 2,
-        timeoutSeconds: 60,
-        signal: AbortSignal.any([signal, controller.signal]),
-      });
-      if (
-        (client.provider === "hostinger" || client.provider === "cloudways") &&
-        existing?.active &&
-        siteUrl
-      ) {
-        const site = normalizeSiteUrl(siteUrl, options.environment, "--url");
-        try {
-          await checkSiteCompatibility(site, { fetch: options.fetch, signal });
-          return { ...existing, aiEnabled: true, aiDomain: site.host };
-        } catch {
-          signal.throwIfAborted();
-        }
+      if (!envId) return false;
+      const site = normalizeSiteUrl(siteUrl, options.environment, "--url");
+      try {
+        await checkSiteCompatibility(site, {
+          fetch: options.fetch,
+          signal,
+          timeoutMs: 3_000,
+        });
+        return true;
+      } catch {
+        signal.throwIfAborted();
+        return false;
       }
-      return existing;
     },
     start: (input) => {
       const profile = input.profile.trim();
