@@ -272,6 +272,7 @@ export function renderSiteProfileActions(
  * The pair below is `renderProviderForm`'s structure, which is the shape this
  * stylesheet has for "a labelled field and the button that submits it".
  */
+// ponytail: headless fork — form intro no longer promises a local browser (device-code login on servers).
 export function renderConnectForm(
   usable: boolean,
   unified = false,
@@ -291,7 +292,7 @@ export function renderConnectForm(
     open && "open",
   )}${ds.classes({ open: signal("cliSites.open") })}${ds.onSubmit(
     submit,
-  )}${ds.indicator("cliSites.loading")}><div class="panel-head"><div><h2>Add site manually</h2><p>Your browser will open so you can authorize the connection. The connection will be saved on your computer.</p></div></div><div class="form-grid"><label><span>Site URL</span><input type="url"${ds.bind(
+  )}${ds.indicator("cliSites.loading")}><div class="panel-head"><div><h2>Add site manually</h2><p>You'll approve the connection on your WordPress site. It's saved where Novamira HQ runs.</p></div></div><div class="form-grid"><label><span>Site URL</span><input type="url"${ds.bind(
     "cliSites.url",
   )} placeholder="https://example.com" required${disabled}${busyDisabled}></label><label><span>Custom name <small>(optional)</small></span><input type="text"${ds.bind(
     "cliSites.name",
