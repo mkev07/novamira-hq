@@ -103,7 +103,8 @@ import {
 /* -------------------------------------------------------------------------- */
 
 /**
- * Go's `providerMetaExpression` table (`views.go:326-381`), extended for Plesk.
+ * Go's `providerMetaExpression` table (`views.go:326-381`), extended for Plesk
+ * and xCloud.
  * The original eight
  * providers by four fields.
  *
@@ -175,6 +176,14 @@ const PROVIDER_FORM_META: JsonValue = {
     companyHelp: "Plesk uses the administrator API key, not an account ID.",
     credentialHelp:
       "Paste a Plesk administrator API key. The panel URL is also required.",
+  },
+  xcloud: {
+    companyLabel: "xCloud team UUID",
+    companyPlaceholder: "First team returned by API",
+    companyHelp:
+      "Optional. Leave blank to use the first team returned by xCloud.",
+    credentialHelp:
+      "Paste an xCloud API token. Create it under Account → API Tokens with the read:servers, read:sites and write:sites scopes.",
   },
 };
 

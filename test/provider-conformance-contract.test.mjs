@@ -66,6 +66,24 @@ const IDENTITY = "conformance-fake-identity-4b7e2d";
  */
 const ID = "1";
 
+/**
+ * xCloud addresses every resource, including its team, by UUID and rejects
+ * anything else locally, so its sweep uses these instead.
+ */
+const XCLOUD_ID = "00000000-0000-4000-8000-000000000001";
+const XCLOUD_TEAM = "00000000-0000-4000-8000-000000000002";
+
+/** A request with every `ID` swapped for the provider's own id format. */
+function forProvider(provider, request) {
+  if (provider !== "xcloud") return request;
+  return Object.fromEntries(
+    Object.entries(request).map(([key, value]) => [
+      key,
+      value === ID ? XCLOUD_ID : value,
+    ]),
+  );
+}
+
 /** The request shape for each read kind: the minimum each one needs. */
 const READ_REQUESTS = {
   capabilities: { kind: "capabilities" },
@@ -206,12 +224,12 @@ for (const provider of PROVIDER_KINDS) {
           await sweep(provider, "validate", "domains", () => client.validate());
         for (const kind of READ_REQUEST_KINDS) {
           await sweep(provider, "read", kind, () =>
-            client.read(READ_REQUESTS[kind]),
+            client.read(forProvider(provider, READ_REQUESTS[kind])),
           );
         }
         for (const kind of SWEPT_ACTION_KINDS) {
           await sweep(provider, "action", kind, () =>
-            client.action(ACTION_REQUESTS[kind]),
+            client.action(forProvider(provider, ACTION_REQUESTS[kind])),
           );
         }
       },
@@ -302,7 +320,7 @@ async function withClient(provider, body, seen = []) {
       provider,
       credential: envCredential(defaultCredentialEnv(provider)),
       // Doubles as the identity half for the providers that require one.
-      companyId: IDENTITY,
+      companyId: provider === "xcloud" ? XCLOUD_TEAM : IDENTITY,
       ...(provider === "plesk"
         ? { apiBaseUrl: "https://plesk.example.invalid:8443" }
         : {}),

@@ -190,6 +190,7 @@ export const PROVIDER_LABELS: Readonly<Record<ProviderKind, string>> = {
   hostinger: "Hostinger",
   cloudways: "Cloudways",
   plesk: "Plesk",
+  xcloud: "xCloud",
 };
 
 export function providerLabel(provider: ProviderKind): string {

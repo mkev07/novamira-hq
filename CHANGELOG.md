@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+### Added
+
+- xCloud hosting accounts can now be connected with an API token. HQ lists
+  WordPress sites and their staging sites, creates backups, purges the page
+  cache, updates plugins and themes, and shows access logs and site events.
+  Without a team, HQ uses the first team the token can access. The xCloud API
+  cannot install plugins, create or push staging sites, or restore backups, so
+  those actions stay unavailable for xCloud.
+
 ### Fixed
 
 - File uploads through the HQ MCP connector now receive the temporary upload

@@ -402,6 +402,7 @@ test("2b: provider choices can be shuffled without favoring the catalog order", 
     "pressable",
     "rocketnet",
     "wpengine",
+    "xcloud",
   ]);
   assert.notEqual(shuffled[0], "kinsta");
 });

@@ -36,6 +36,7 @@ export function hostingInspectionOptions(
       "pantheon",
       "wpengine",
       "cloudways",
+      "xcloud",
     ].includes(provider)
   ) {
     add(
@@ -44,7 +45,9 @@ export function hostingInspectionOptions(
         ? "Clear object cache"
         : provider === "cloudways"
           ? "Clear Varnish cache"
-          : "Clear site cache",
+          : provider === "xcloud"
+            ? "Clear page cache"
+            : "Clear site cache",
       "cache.clear",
       "Cache",
     );
@@ -70,6 +73,10 @@ export function hostingInspectionOptions(
       "activity.list",
       "Provider activity",
     );
+  }
+  if (provider === "xcloud") {
+    add("logs:access", "Access log", "logs.get", "Logs");
+    add("activity", "Site events", "activity.list", "Provider activity");
   }
   if (provider === "kinsta") {
     for (const metric of ["visits", "bandwidth", "cdn-bandwidth"])
@@ -122,6 +129,7 @@ export function hostingInspectionOptions(
       "pantheon",
       "wpengine",
       "instawp",
+      "xcloud",
     ].includes(provider)
   )
     add(
@@ -262,7 +270,15 @@ export async function inspectHosting(
       query: [
         ["limit", String(limit)],
         ["offset", String(offset)],
-        ...(client.provider === "kinsta" ? [] : [["site_id", siteId] as const]),
+        ...(client.provider === "kinsta"
+          ? []
+          : [
+              [
+                "site_id",
+                // xCloud keeps events per environment site.
+                client.provider === "xcloud" ? envId : siteId,
+              ] as const,
+            ]),
       ],
     };
   else if (option.section === "Logs")
@@ -312,9 +328,11 @@ export async function inspectHosting(
           note:
             client.provider === "rocketnet"
               ? "Access logs for the last hour."
-              : client.provider === "pressable"
-                ? "The provider does not support a line limit."
-                : "Requested tail of the selected log.",
+              : client.provider === "xcloud"
+                ? "Latest access log entries, read from the server over SSH."
+                : client.provider === "pressable"
+                  ? "The provider does not support a line limit."
+                  : "Requested tail of the selected log.",
         }
       : {}),
     truncated,
