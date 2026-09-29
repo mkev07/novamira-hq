@@ -29,5 +29,9 @@ export function siteCliEnvironment(
   // Supported by Node 22.19+/24.6+. Never disable TLS verification or modify
   // the user's trust store; preserve an explicit operator override.
   result.NODE_USE_SYSTEM_CA ??= "1";
+  // The desktop site-CLI role runs on Deno, which reads its own variable. Keep
+  // the bundled roots and add the OS store, so a certificate the operator
+  // trusted (e.g. Local's "Trust" for *.local sites) works there too.
+  result.DENO_TLS_CA_STORE ??= "mozilla,system";
   return result;
 }

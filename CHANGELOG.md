@@ -13,6 +13,11 @@
 
 ### Fixed
 
+- Local development sites on `*.localhost` domains can now be connected over
+  HTTP, matching the bundled Novamira CLI. Sites on `.local` domains connect
+  over HTTPS, and HQ now explains how to enable it when plain HTTP is entered.
+- In the desktop app, site connections now trust certificates in the system
+  trust store, such as the one Local installs for HTTPS `.local` sites.
 - When a site cannot be reached or is not ready during connection, HQ now asks
   whether Novamira is installed and active. The message points to Setup
   Novamira only where the dashboard offers it for that site.
