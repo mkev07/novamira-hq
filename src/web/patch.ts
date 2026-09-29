@@ -34,6 +34,7 @@
 
 import type { JsonValue } from "./expr.js";
 import type { SseStream } from "./sse.js";
+import { renderDeviceLogin } from "./views/device-login.js";
 import { renderMain, renderNav, renderToast } from "./views/layout.js";
 import { renderPageBody, type PageModel } from "./views/pages.js";
 import type { DashboardNotice, DashboardPage } from "./views/types.js";
@@ -87,13 +88,39 @@ export function patchToast(stream: SseStream, notice: DashboardNotice): void {
   });
 }
 
-/** ponytail: headless fork — the device-login prompt, while `auth login --device` waits. */
-export function patchDeviceToast(
+/**
+ * ponytail: headless fork — open the device-login dialog while `auth login --device`
+ * waits, or (no `device`) put the empty placeholder back once it has finished. The toast
+ * keeps the code visible if the operator closes the dialog early.
+ */
+export function patchDeviceLogin(
   stream: SseStream,
-  device: { readonly url: string; readonly code: string },
+  siteUrl: string,
+  device?: {
+    readonly url: string;
+    readonly code: string;
+    readonly expiresInSeconds?: number;
+  },
 ): void {
-  patchToast(stream, {
-    level: "neutral",
-    message: `To authorize this site, open ${device.url} and enter the code ${device.code}. Waiting for approval (up to 10 minutes)…`,
-  });
+  if (device !== undefined) {
+    patchToast(stream, {
+      level: "neutral",
+      message: `Waiting for you to approve ${new URL(siteUrl).host} with code ${device.code}. Closing the dialog does not cancel it.`,
+    });
+  }
+  stream.patchElements(
+    renderDeviceLogin(
+      device === undefined
+        ? undefined
+        : {
+            siteUrl,
+            url: device.url,
+            code: device.code,
+            ...(device.expiresInSeconds === undefined
+              ? {}
+              : { expiresAt: Date.now() + device.expiresInSeconds * 1000 }),
+          },
+    ),
+    { selectorId: "device-login", mode: "outer" },
+  );
 }

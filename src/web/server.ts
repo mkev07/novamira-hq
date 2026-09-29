@@ -155,6 +155,7 @@ export interface DashboardIntegration {
     onDevice?: (device: {
       readonly url: string;
       readonly code: string;
+      readonly expiresInSeconds?: number;
     }) => void,
   ): Promise<ConnectOutcome>;
   siteInventory(

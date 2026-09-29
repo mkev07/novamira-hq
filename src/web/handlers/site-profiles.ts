@@ -54,7 +54,7 @@ import { asCliError, CliError } from "../../errors.js";
 import { normalizeSiteUrl } from "../../provisioning/index.js";
 import { isSiteProfileName } from "../../site-profiles.js";
 import type { SiteProfileOutcome } from "../../site-profiles.js";
-import { patchDeviceToast, patchPage, patchToast } from "../patch.js";
+import { patchDeviceLogin, patchPage, patchToast } from "../patch.js";
 import { readSignals } from "../request.js";
 import type { DashboardRequest } from "../request.js";
 import type { DashboardResponse } from "../responses.js";
@@ -223,15 +223,21 @@ export function createSiteProfileConnectHandler(
       patchToast(stream, {
         level: "neutral",
         message:
-          "Checking existing access… If authorization is needed, your browser will open. Otherwise, no new authorization is required.",
+          // ponytail: headless fork — device mode shows a code instead of opening a browser
+          context.environment.NOVAMIRA_HQ_DEVICE_LOGIN === "1"
+            ? "Checking existing access… If authorization is needed, you'll get a code to approve on the site."
+            : "Checking existing access… If authorization is needed, your browser will open. Otherwise, no new authorization is required.",
       });
+      const prompt = { shown: false };
       const outcome = await context.integration.connect(
         site.siteUrl,
         name === "" ? undefined : name,
         (device) => {
-          patchDeviceToast(stream, device);
+          prompt.shown = true;
+          patchDeviceLogin(stream, site.siteUrl, device);
         },
       );
+      if (prompt.shown) patchDeviceLogin(stream, site.siteUrl);
       const reconnecting = (request.query.get("url") ?? "").trim() !== "";
       if (outcome.kind === "connected" && !reconnecting) {
         // `auth login` has already saved the connection. Refreshing every

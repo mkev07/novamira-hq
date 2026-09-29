@@ -24,6 +24,7 @@ import { connCellId, SSE_PATCH_FRAGMENTS } from "../dist/web/patches.js";
 import { streamSse } from "../dist/web/sse.js";
 import { renderDiagnosticsOutput } from "../dist/web/views/diagnostics.js";
 import { renderUpdateCard } from "../dist/web/views/updates.js";
+import { renderDeviceLogin } from "../dist/web/views/device-login.js";
 import { renderProviderFlash } from "../dist/web/views/providers.js";
 import {
   renderSetupWork,
@@ -302,6 +303,7 @@ test("every catalogued outer fragment has a root element carrying its id", () =>
         }),
       ),
     ],
+    ["device-login/outer", renderHtml(renderDeviceLogin())],
   ]);
   assert.ok(SSE_PATCH_FRAGMENTS.length > 0);
   for (const fragment of SSE_PATCH_FRAGMENTS) {

@@ -527,6 +527,23 @@ export function desktopReleaseHref(target: string): Attr {
   return attr("href", target);
 }
 
+/**
+ * ponytail: headless fork — the site's device-verification page: HTTPS, no credentials, and
+ * on the origin of the site being connected, so the CLI cannot point the operator elsewhere.
+ */
+export function deviceVerificationHref(target: string, siteUrl: string): Attr {
+  const page = new URL(target);
+  if (
+    page.protocol !== "https:" ||
+    page.username !== "" ||
+    page.password !== "" ||
+    page.origin !== new URL(siteUrl).origin
+  ) {
+    throw internalError("Invalid device verification link.");
+  }
+  return attr("href", page.href);
+}
+
 /** Fixed product links; no caller-supplied external URLs. */
 export function aboutHref(link: "website" | "source" | "license"): Attr {
   return attr(

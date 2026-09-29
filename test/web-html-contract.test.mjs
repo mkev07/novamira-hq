@@ -91,6 +91,7 @@ import {
 } from "../dist/web/views/layout.js";
 import { renderDiagnosticsOutput } from "../dist/web/views/diagnostics.js";
 import { renderUpdateCard } from "../dist/web/views/updates.js";
+import { renderDeviceLogin } from "../dist/web/views/device-login.js";
 import { renderProviderFlash } from "../dist/web/views/providers.js";
 import {
   renderSetupWork,
@@ -1040,6 +1041,7 @@ const FRAGMENT_RENDERERS = {
       latest: "0.2.0",
       updateAvailable: true,
     }),
+  "device-login/outer": () => renderDeviceLogin(),
 };
 
 function fragmentKey(fragment) {
@@ -1067,6 +1069,7 @@ test("27: the catalog is non-empty and every selector id is a legal target", () 
     "setup-work/inner",
     "diagnostics-output/outer",
     "updates-card/outer",
+    "device-login/outer",
   ]);
 });
 

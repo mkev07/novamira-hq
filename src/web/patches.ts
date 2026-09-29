@@ -73,7 +73,9 @@ export type StaticPatchSelectorId =
   | "sites-result"
   | "setup-work"
   | "diagnostics-output"
-  | "updates-card";
+  | "updates-card"
+  // ponytail: headless fork — the device-login dialog (views/device-login.ts).
+  | "device-login";
 
 /**
  * The catalog. Conventions rule 27 asserts it is non-empty and that every
@@ -119,6 +121,8 @@ export const SSE_PATCH_FRAGMENTS: readonly PatchFragment[] = Object.freeze([
   // root and an inner patch would leave the pre-check version of it in place,
   // re-firing the silent check on every repaint.
   { selectorId: "updates-card", mode: "outer" },
+  // ponytail: headless fork — outer, so the dialog/placeholder swap removes the modal.
+  { selectorId: "device-login", mode: "outer" },
 ] as const satisfies readonly PatchFragment[]);
 
 declare const ConnCellBrand: unique symbol;

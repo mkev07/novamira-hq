@@ -60,6 +60,7 @@ import {
 } from "../html.js";
 import { ariaBoolean, get, jsBoolean, set, signal, toggle } from "../expr.js";
 import { toSignalRecord, type DashboardSignals } from "../signals.js";
+import { renderDeviceLogin } from "./device-login.js";
 import {
   statusClass,
   type ConfigView,
@@ -103,7 +104,7 @@ export function renderDocument(input: DocumentInput): Html {
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to content</a>
-<div class="shell"${ds.signals(toSignalRecord(input.signals))}${input.automaticUpdates ? ds.init(get(url("/_dashboard/updates/check", { automatic: true }), { include: [] })) : false}>${renderSidebar(input.view, input.page, input.activeNav)}<div class="main-region">${renderToast(input.page === "providers" ? { level: "neutral", message: "" } : input.notice)}${renderMain(input.page, input.body)}</div></div>
+<div class="shell"${ds.signals(toSignalRecord(input.signals))}${input.automaticUpdates ? ds.init(get(url("/_dashboard/updates/check", { automatic: true }), { include: [] })) : false}>${renderSidebar(input.view, input.page, input.activeNav)}<div class="main-region">${renderToast(input.page === "providers" ? { level: "neutral", message: "" } : input.notice)}${renderMain(input.page, input.body)}</div></div>${renderDeviceLogin()}
 </body>
 </html>
 `;

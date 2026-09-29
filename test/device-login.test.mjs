@@ -11,6 +11,8 @@ import {
   createConnectAction,
   parseDeviceInstructions,
 } from "../dist/integration/connect.js";
+import { renderHtml } from "../dist/web/html.js";
+import { renderDeviceLogin } from "../dist/web/views/device-login.js";
 
 const SITE = "https://example.com";
 const PROMPT =
@@ -23,8 +25,13 @@ test("parseDeviceInstructions reads the page and code from the site CLI prompt",
   assert.deepEqual(parseDeviceInstructions(PROMPT, SITE), {
     url: "https://example.com/wp-admin/admin.php?page=novamira-oauth-device",
     code: "MKPW-HDHL",
+    expiresInSeconds: 600,
   });
   assert.equal(parseDeviceInstructions("Open this page", SITE), undefined);
+  assert.equal(
+    parseDeviceInstructions(PROMPT.split("The code")[0], SITE).expiresInSeconds,
+    undefined,
+  );
 });
 
 test("parseDeviceInstructions refuses a page on another origin", () => {
@@ -69,6 +76,7 @@ test("device mode passes --device and reports the prompt before the child exits"
     {
       url: "https://example.com/wp-admin/admin.php?page=novamira-oauth-device",
       code: "MKPW-HDHL",
+      expiresInSeconds: 600,
     },
   ]);
 });
@@ -97,4 +105,39 @@ test("without the flag, Connect keeps the browser login", async () => {
     assert.fail("no device prompt expected"),
   );
   assert.ok(!args.includes("--device"));
+});
+
+test("the dialog opens itself as a modal with the code, copy actions and a same-origin link", () => {
+  const markup = renderHtml(
+    renderDeviceLogin({
+      siteUrl: SITE,
+      url: "https://example.com/wp-admin/admin.php?page=novamira-oauth-device",
+      code: "MKPW-HDHL",
+      expiresAt: Date.now() + 600_000,
+    }),
+  );
+  assert.match(markup, /^<dialog id="device-login"/);
+  assert.match(markup, /data-init="el\.showModal\(\)"/);
+  assert.match(
+    markup,
+    /href="https:\/\/example\.com\/wp-admin\/admin\.php\?page=novamira-oauth-device" target="_blank" rel="noopener noreferrer"/,
+  );
+  assert.equal(markup.match(/window\.novamiraUi\.copy\(/g)?.length, 2);
+  assert.equal(markup.match(/class="device-code-cell"/g)?.length, 8);
+  assert.match(markup, /data-expires-at="\d+">Code expires in (9:59|10:00)</);
+});
+
+test("the dialog refuses a page on another origin and renders the placeholder", () => {
+  const placeholder = '<div id="device-login" hidden></div>';
+  assert.equal(renderHtml(renderDeviceLogin()), placeholder);
+  assert.equal(
+    renderHtml(
+      renderDeviceLogin({
+        siteUrl: SITE,
+        url: "https://evil.test/approve",
+        code: "MKPW-HDHL",
+      }),
+    ),
+    placeholder,
+  );
 });

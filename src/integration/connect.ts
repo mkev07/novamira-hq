@@ -100,6 +100,8 @@ export const DEVICE_LOGIN_TIMEOUT_MS = 600_000;
 export interface DeviceInstructions {
   readonly url: string;
   readonly code: string;
+  /** From "The code expires in N minutes/seconds."; absent if the CLI did not say. */
+  readonly expiresInSeconds?: number;
 }
 
 /**
@@ -116,7 +118,16 @@ export function parseDeviceInstructions(
   if (match === null) return undefined;
   const [, url = "", code = ""] = match;
   if (originOf(url) !== originOf(siteUrl)) return undefined;
-  return { url, code };
+  const lifetime = /^The code expires in (\d{1,4}) (seconds|minutes)\./m.exec(
+    stderr,
+  );
+  if (lifetime === null) return { url, code };
+  const [, amount = "0", unit] = lifetime;
+  return {
+    url,
+    code,
+    expiresInSeconds: Number(amount) * (unit === "minutes" ? 60 : 1),
+  };
 }
 
 export interface ConnectActionOptions {

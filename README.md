@@ -62,10 +62,12 @@ Code patches, all marked `// ponytail:` for easy spotting during merges:
 4. `src/main.ts`, `src/mcp/main.ts` — `NOVAMIRA_HQ_CREDENTIALS=file` selects
    upstream's existing `FileCredentialBackend` (`0600` files, not encrypted).
 5. `src/integration/connect.ts`, `src/integration/spawn.ts`, `src/web/patch.ts`,
-   the two connect handlers — `NOVAMIRA_HQ_DEVICE_LOGIN=1` makes **Add site** run
-   `auth login --device` (a server has no browser for the loopback login) and
-   shows the site's verification page and code in a toast. Only a page on the
-   site being connected and a code-shaped value are ever displayed.
+   `src/web/views/device-login.ts`, the two connect handlers — with
+   `NOVAMIRA_HQ_DEVICE_LOGIN=1`, **Add site** runs `auth login --device` (a
+   server has no browser for the loopback login) and opens a dialog with the
+   code, a **Copy code & open approval page** button, the steps and a live
+   expiry countdown. It closes itself when the login finishes. Only a page on
+   the site being connected and a code-shaped value are ever displayed.
 6. [`scripts/patch-site-cli.mjs`](scripts/patch-site-cli.mjs), run by the
    Nixpacks build — patches the installed `@novamira/cli` so device polling backs
    off on the Novamira plugin's `429 temporarily_unavailable` instead of failing

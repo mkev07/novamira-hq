@@ -215,6 +215,11 @@ export function checkedAt(millis: number): Attr {
 export function jobStartedAt(millis: number): Attr {
   return attr("data-job-started-at", String(millis));
 }
+
+/** ponytail: headless fork — `data-expires-at`, unix milliseconds; `relative-time.js` counts down to it. */
+export function expiresAt(millis: number): Attr {
+  return attr("data-expires-at", String(millis));
+}
 export function jobFinishedAt(millis: number | null): Attr {
   return attr("data-job-finished-at", millis === null ? "" : String(millis));
 }

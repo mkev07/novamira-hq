@@ -48,7 +48,7 @@ import { asCliError, CliError } from "../../errors.js";
 import { isSiteProfileName } from "../../site-profiles.js";
 import { unavailableHint } from "../../connection-state.js";
 import { normalizeSiteUrl } from "../../provisioning/index.js";
-import { patchDeviceToast, patchToast } from "../patch.js";
+import { patchDeviceLogin, patchToast } from "../patch.js";
 import { readSignals } from "../request.js";
 import type { DashboardResponse } from "../responses.js";
 import type { RouteContext, RouteHandler } from "../routes.js";
@@ -125,15 +125,21 @@ export function createConnectHandler(context: RouteContext): RouteHandler {
           patchToast(stream, {
             level: "neutral",
             message:
-              "Novamira is ready. Checking existing access… Your browser will open only if authorization is needed.",
+              // ponytail: headless fork — device mode shows a code instead of opening a browser
+              context.environment.NOVAMIRA_HQ_DEVICE_LOGIN === "1"
+                ? "Novamira is ready. Checking existing access… You'll get a code to approve only if authorization is needed."
+                : "Novamira is ready. Checking existing access… Your browser will open only if authorization is needed.",
           });
+        const prompt = { shown: false };
         const outcome = await context.integration.connect(
           site.siteUrl,
           name || undefined,
           (device) => {
-            patchDeviceToast(stream, device);
+            prompt.shown = true;
+            patchDeviceLogin(stream, site.siteUrl, device);
           },
         );
+        if (prompt.shown) patchDeviceLogin(stream, site.siteUrl);
         if (outcome.kind === "failed") {
           // A fixed sentence from a closed set. No child output, ever.
           patchToast(stream, danger(unavailableHint(outcome.reason)));

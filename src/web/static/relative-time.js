@@ -17,6 +17,12 @@
       var seconds = Math.max(0, Math.floor((end - start) / 1000));
       jobs[j].textContent = Math.floor(seconds / 60) + " min " + (seconds % 60) + " s";
     }
+    // ponytail: headless fork — device-login code countdown.
+    var timers = document.querySelectorAll("[data-expires-at]");
+    for (var t = 0; t < timers.length; t++) {
+      var left = Math.max(0, Math.round((Number(timers[t].getAttribute("data-expires-at")) - Date.now()) / 1000));
+      timers[t].textContent = left ? "Code expires in " + Math.floor(left / 60) + ":" + String(left % 60).padStart(2, "0") : "Code expired";
+    }
     var els = document.querySelectorAll("[data-checked-at]");
     for (var i = 0; i < els.length; i++) {
       var ms = parseInt(els[i].getAttribute("data-checked-at"), 10);

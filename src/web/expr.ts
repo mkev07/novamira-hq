@@ -85,6 +85,19 @@ export function copyText(value: string): Expr {
   );
 }
 
+/**
+ * ponytail: headless fork — `copyText`, but the feedback goes beside the element that was
+ * clicked (`el`), which also holds in Safari, where a click does not focus a button or link.
+ */
+export function copyFrom(value: string): Expr {
+  return makeExpr(`window.novamiraUi.copy(${jsString(value).source}, el)`);
+}
+
+/** ponytail: headless fork — open a server-patched `<dialog>` as a modal. */
+export function showModal(): Expr {
+  return makeExpr("el.showModal()");
+}
+
 /** Copy an already-rendered report; feedback stays beside its button. */
 export function copyReport(reportId: string, feedbackId: string): Expr {
   return makeExpr(`(() => {
