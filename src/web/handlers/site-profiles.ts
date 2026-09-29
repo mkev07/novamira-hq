@@ -154,7 +154,7 @@ function noticeFor(
       return { level: "warn", message: missing };
     case "rejected":
       return danger(
-        "The Novamira site CLI rejected that rename. The new name may already be in use, or the installed CLI may need updating.",
+        "The site connection could not be renamed. The new name may already be in use. Try another name, or update Novamira HQ if the problem continues.",
       );
     case "failed":
       // A fixed sentence from a closed set. No child output, ever.
@@ -289,7 +289,7 @@ export function createSiteProfileLogoutHandler(
         noticeFor(
           outcome,
           `Signed out of ${name}.`,
-          `The Novamira site CLI no longer holds ${name}.`,
+          `The saved site connection ${name} is no longer available.`,
         ),
       );
     },
@@ -347,7 +347,7 @@ export function createSiteProfileRenameHandler(
         noticeFor(
           outcome,
           `Renamed ${name} to ${newName}.`,
-          `The Novamira site CLI no longer holds ${name}.`,
+          `The saved site connection ${name} is no longer available.`,
         ),
       );
     },
@@ -376,7 +376,7 @@ export function createSiteProfileRemoveHandler(
         noticeFor(
           outcome,
           `Removed ${name}.`,
-          `The Novamira site CLI no longer holds ${name}.`,
+          `The saved site connection ${name} is no longer available.`,
         ),
       );
     },

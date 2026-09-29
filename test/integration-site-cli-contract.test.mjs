@@ -1203,7 +1203,7 @@ test("the dashboard command builds the service from the real seams", async () =>
     reason: "cli_absent",
   });
   assert.equal(absent.cliAvailable, false);
-  assert.match(SITE_CLI_INSTALL_HINT, /NOVAMIRA_HQ_SITE_CLI/);
+  assert.match(SITE_CLI_INSTALL_HINT, /Repair or update Novamira HQ/);
 
   // And an override replaces the whole service, which is what a page test wants.
   const replaced = createDashboardIntegration(
