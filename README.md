@@ -45,13 +45,14 @@ never publish port 8787 or attach a public domain without adding auth in front.
 
 ## Changes from upstream
 
-| Area             | Upstream                                              | This fork                                                     |
-| :--------------- | :---------------------------------------------------- | :------------------------------------------------------------ |
-| Bind address     | Loopback only (`127.0.0.1`, `::1`, `localhost`)       | Any address                                                   |
-| Request checks   | Rejects non-loopback `Host`/`Origin`/`Sec-Fetch-Site` | Not checked (DNS-rebinding guard removed)                     |
-| Post-bind check  | Exits if bound to a non-loopback address              | Removed                                                       |
-| Credential store | OS keyring only; refuses to save without one          | Same, or owner-only files with `NOVAMIRA_HQ_CREDENTIALS=file` |
-| Runs as          | Desktop app                                           | Headless container                                            |
+| Area             | Upstream                                              | This fork                                                            |
+| :--------------- | :---------------------------------------------------- | :------------------------------------------------------------------- |
+| Bind address     | Loopback only (`127.0.0.1`, `::1`, `localhost`)       | Any address                                                          |
+| Request checks   | Rejects non-loopback `Host`/`Origin`/`Sec-Fetch-Site` | Not checked (DNS-rebinding guard removed)                            |
+| Post-bind check  | Exits if bound to a non-loopback address              | Removed                                                              |
+| Credential store | OS keyring only; refuses to save without one          | Same, or owner-only files with `NOVAMIRA_HQ_CREDENTIALS=file`        |
+| Runs as          | Desktop app                                           | Headless container                                                   |
+| Connecting sites | Browser login on the same machine                     | Device code shown in the dashboard with `NOVAMIRA_HQ_DEVICE_LOGIN=1` |
 
 Code patches, all marked `// ponytail:` for easy spotting during merges:
 
@@ -60,6 +61,15 @@ Code patches, all marked `// ponytail:` for easy spotting during merges:
 3. `src/web/server.ts` — the post-bind loopback assertion is removed.
 4. `src/main.ts`, `src/mcp/main.ts` — `NOVAMIRA_HQ_CREDENTIALS=file` selects
    upstream's existing `FileCredentialBackend` (`0600` files, not encrypted).
+5. `src/integration/connect.ts`, `src/integration/spawn.ts`, `src/web/patch.ts`,
+   the two connect handlers — `NOVAMIRA_HQ_DEVICE_LOGIN=1` makes **Add site** run
+   `auth login --device` (a server has no browser for the loopback login) and
+   shows the site's verification page and code in a toast. Only a page on the
+   site being connected and a code-shaped value are ever displayed.
+6. [`scripts/patch-site-cli.mjs`](scripts/patch-site-cli.mjs), run by the
+   Nixpacks build — patches the installed `@novamira/cli` so device polling backs
+   off on the Novamira plugin's `429 temporarily_unavailable` instead of failing
+   the login with `auth_denied`. The build fails if the patch target moves.
 
 Plus [`nixpacks.toml`](nixpacks.toml) for the Dokploy build.
 
@@ -68,11 +78,12 @@ Plus [`nixpacks.toml`](nixpacks.toml) for the Dokploy build.
 **1. Application** — Git source pointing at this repo, branch `main`, no domain.
 Environment, plus a volume mount `novamira-hq-data` → `/data`:
 
-| Variable                  | Value        | Holds                                  |
-| :------------------------ | :----------- | :------------------------------------- |
-| `NOVAMIRA_HQ_HOME`        | `/data/hq`   | HQ config, history, locks, credentials |
-| `NOVAMIRA_HOME`           | `/data/site` | Site CLI profiles (WordPress tokens)   |
-| `NOVAMIRA_HQ_CREDENTIALS` | `file`       | Use the file credential backend        |
+| Variable                   | Value        | Holds                                  |
+| :------------------------- | :----------- | :------------------------------------- |
+| `NOVAMIRA_HQ_HOME`         | `/data/hq`   | HQ config, history, locks, credentials |
+| `NOVAMIRA_HOME`            | `/data/site` | Site CLI profiles (WordPress tokens)   |
+| `NOVAMIRA_HQ_CREDENTIALS`  | `file`       | Use the file credential backend        |
+| `NOVAMIRA_HQ_DEVICE_LOGIN` | `1`          | Add site uses the device-code login    |
 
 **2. Relay** — a compose service in the same project (replace the service name
 with the app's Dokploy app name):

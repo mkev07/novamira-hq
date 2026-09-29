@@ -86,3 +86,14 @@ export function patchToast(stream: SseStream, notice: DashboardNotice): void {
     mode: "outer",
   });
 }
+
+/** ponytail: headless fork — the device-login prompt, while `auth login --device` waits. */
+export function patchDeviceToast(
+  stream: SseStream,
+  device: { readonly url: string; readonly code: string },
+): void {
+  patchToast(stream, {
+    level: "neutral",
+    message: `To authorize this site, open ${device.url} and enter the code ${device.code}. Waiting for approval (up to 10 minutes)…`,
+  });
+}

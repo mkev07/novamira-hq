@@ -149,7 +149,14 @@ export interface DashboardIntegration {
    * failure and never throws — see `src/integration/connect.ts`, which is the
    * only place HQ runs the site CLI.
    */
-  connect(siteUrl: string, name?: string): Promise<ConnectOutcome>;
+  connect(
+    siteUrl: string,
+    name?: string,
+    onDevice?: (device: {
+      readonly url: string;
+      readonly code: string;
+    }) => void,
+  ): Promise<ConnectOutcome>;
   siteInventory(
     queries: readonly ConnectionQuery[],
   ): Promise<SiteInventorySnapshot>;

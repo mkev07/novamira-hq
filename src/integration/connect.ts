@@ -78,6 +78,7 @@ export const AUTH_LOGIN_TIMEOUT_MS = 300_000;
 export function authLoginArgs(
   siteUrl: string,
   name?: string,
+  device = false,
 ): readonly string[] {
   return [
     "--json",
@@ -86,7 +87,36 @@ export function authLoginArgs(
     "login",
     siteUrl,
     ...(name === undefined ? [] : ["--name", name]),
+    ...(device ? ["--device"] : []),
   ];
+}
+
+/**
+ * ponytail: headless fork — `NOVAMIRA_HQ_DEVICE_LOGIN=1` runs `auth login --device`, since a
+ * server has no browser for the loopback flow. The site's device code lives 10 minutes.
+ */
+export const DEVICE_LOGIN_TIMEOUT_MS = 600_000;
+
+export interface DeviceInstructions {
+  readonly url: string;
+  readonly code: string;
+}
+
+/**
+ * The verification page and user code out of the CLI's device prompt, or
+ * `undefined`. Only a page on the site being connected and a short code-shaped
+ * value are accepted, so no other child text can reach the dashboard.
+ */
+export function parseDeviceInstructions(
+  stderr: string,
+  siteUrl: string,
+): DeviceInstructions | undefined {
+  const match =
+    /^(https:\/\/\S+)\r?\nEnter the code: ([A-Z0-9-]{4,20})\r?$/m.exec(stderr);
+  if (match === null) return undefined;
+  const [, url = "", code = ""] = match;
+  if (originOf(url) !== originOf(siteUrl)) return undefined;
+  return { url, code };
 }
 
 export interface ConnectActionOptions {
@@ -112,12 +142,23 @@ function failed(reason: UnavailableReason): ConnectOutcome {
  */
 export function createConnectAction(
   options: ConnectActionOptions,
-): (siteUrl: string, name?: string) => Promise<ConnectOutcome> {
-  const timeoutMs = options.timeoutMs ?? AUTH_LOGIN_TIMEOUT_MS;
+): (
+  siteUrl: string,
+  name?: string,
+  onDevice?: (instructions: DeviceInstructions) => void,
+) => Promise<ConnectOutcome> {
+  const device = options.environment.NOVAMIRA_HQ_DEVICE_LOGIN === "1";
+  const timeoutMs =
+    options.timeoutMs ??
+    (device ? DEVICE_LOGIN_TIMEOUT_MS : AUTH_LOGIN_TIMEOUT_MS);
   const maxStdoutBytes = options.maxStdoutBytes ?? DEFAULT_MAX_STDOUT_BYTES;
   const maxStderrBytes = options.maxStderrBytes ?? DEFAULT_MAX_STDERR_BYTES;
 
-  return async (siteUrl: string, name?: string): Promise<ConnectOutcome> => {
+  return async (
+    siteUrl: string,
+    name?: string,
+    onDevice?: (instructions: DeviceInstructions) => void,
+  ): Promise<ConnectOutcome> => {
     if (name !== undefined && !isSiteProfileName(name)) {
       throw new CliError(
         "usage_error",
@@ -166,14 +207,26 @@ export function createConnectAction(
     // One login, one deadline. `AbortSignal.timeout` is the same mechanism the
     // refresh uses; the child timer is the belt to its braces.
     const signal = AbortSignal.timeout(timeoutMs + 1_000);
+    let shown = false;
     const outcome = await options.spawn({
       command: resolution.command,
-      args: [...resolution.prefixArgs, ...authLoginArgs(siteUrl, name)],
+      args: [...resolution.prefixArgs, ...authLoginArgs(siteUrl, name, device)],
       env: siteCliChildEnv(options.environment),
       timeoutMs,
       maxStdoutBytes,
       maxStderrBytes,
       signal,
+      ...(device && onDevice !== undefined
+        ? {
+            onStderr: (text: string) => {
+              if (shown) return;
+              const instructions = parseDeviceInstructions(text, siteUrl);
+              if (instructions === undefined) return;
+              shown = true;
+              onDevice(instructions);
+            },
+          }
+        : {}),
     });
 
     const result = interpretChildOutcome(outcome);

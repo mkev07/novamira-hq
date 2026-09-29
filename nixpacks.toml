@@ -5,7 +5,7 @@ nixPkgs = ["nodejs_22"]
 cmds = ["npm ci --ignore-scripts || npm install --ignore-scripts"]
 
 [phases.build]
-cmds = ["npm run build"]
+cmds = ["node scripts/patch-site-cli.mjs", "npm run build"]
 
 [start]
 cmd = "node dist/index.js dashboard --listen 0.0.0.0:8787"

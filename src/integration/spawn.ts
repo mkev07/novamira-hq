@@ -72,6 +72,8 @@ export interface ChildInvocation {
   readonly input?: string;
   /** Public terminal forwarding: inherit all streams without buffering output. */
   readonly inheritStdio?: boolean;
+  /** ponytail: headless fork — live stderr, for reading device-login instructions mid-flight. */
+  readonly onStderr?: (text: string) => void;
 }
 
 /**
@@ -272,8 +274,10 @@ export const nodeSpawnChild: SpawnChild = (invocation) =>
     if (child.stderr !== null) {
       child.stderr.on("data", (chunk: Buffer) => {
         stderrBytes += chunk.byteLength;
-        if (stderrBytes <= invocation.maxStderrBytes) stderrChunks.push(chunk);
-        else terminate("truncated");
+        if (stderrBytes <= invocation.maxStderrBytes) {
+          stderrChunks.push(chunk);
+          invocation.onStderr?.(Buffer.concat(stderrChunks).toString("utf8"));
+        } else terminate("truncated");
       });
       child.stderr.on("error", () => undefined);
     }

@@ -54,7 +54,7 @@ import { asCliError, CliError } from "../../errors.js";
 import { normalizeSiteUrl } from "../../provisioning/index.js";
 import { isSiteProfileName } from "../../site-profiles.js";
 import type { SiteProfileOutcome } from "../../site-profiles.js";
-import { patchPage, patchToast } from "../patch.js";
+import { patchDeviceToast, patchPage, patchToast } from "../patch.js";
 import { readSignals } from "../request.js";
 import type { DashboardRequest } from "../request.js";
 import type { DashboardResponse } from "../responses.js";
@@ -228,6 +228,9 @@ export function createSiteProfileConnectHandler(
       const outcome = await context.integration.connect(
         site.siteUrl,
         name === "" ? undefined : name,
+        (device) => {
+          patchDeviceToast(stream, device);
+        },
       );
       const reconnecting = (request.query.get("url") ?? "").trim() !== "";
       if (outcome.kind === "connected" && !reconnecting) {

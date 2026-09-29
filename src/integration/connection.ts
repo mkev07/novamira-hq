@@ -91,7 +91,7 @@ import {
   interpretChildOutcome,
   type ChildResult,
 } from "./classify.js";
-import { createConnectAction } from "./connect.js";
+import { createConnectAction, type DeviceInstructions } from "./connect.js";
 import { normalizeOrigins, originOf } from "./origin.js";
 import { runPool } from "./pool.js";
 import {
@@ -184,7 +184,11 @@ export interface SiteCliIntegration extends SiteProfileService {
    * Spawns `novamira auth login <url>`. Resolves for every failure and never
    * throws; see `connect.ts` for why the outcome carries a reason and no text.
    */
-  connect(siteUrl: string, name?: string): Promise<ConnectOutcome>;
+  connect(
+    siteUrl: string,
+    name?: string,
+    onDevice?: (instructions: DeviceInstructions) => void,
+  ): Promise<ConnectOutcome>;
   /** List profiles once and match that same answer to hosting environments. */
   siteInventory(
     queries: readonly ConnectionQuery[],

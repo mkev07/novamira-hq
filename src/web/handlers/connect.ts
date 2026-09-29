@@ -48,7 +48,7 @@ import { asCliError, CliError } from "../../errors.js";
 import { isSiteProfileName } from "../../site-profiles.js";
 import { unavailableHint } from "../../connection-state.js";
 import { normalizeSiteUrl } from "../../provisioning/index.js";
-import { patchToast } from "../patch.js";
+import { patchDeviceToast, patchToast } from "../patch.js";
 import { readSignals } from "../request.js";
 import type { DashboardResponse } from "../responses.js";
 import type { RouteContext, RouteHandler } from "../routes.js";
@@ -130,6 +130,9 @@ export function createConnectHandler(context: RouteContext): RouteHandler {
         const outcome = await context.integration.connect(
           site.siteUrl,
           name || undefined,
+          (device) => {
+            patchDeviceToast(stream, device);
+          },
         );
         if (outcome.kind === "failed") {
           // A fixed sentence from a closed set. No child output, ever.
