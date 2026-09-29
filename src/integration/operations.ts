@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 import { CliError } from "../errors.js";
-import { redact } from "../output/redact.js";
+import { redactAbilityResult } from "../output/ability-result.js";
 import { isSiteProfileName } from "../site-profiles.js";
 import { type ResolveSiteCli } from "./resolve.js";
 import { parseEnvelope, parseSitesList, siteCliChildEnv } from "./site-cli.js";
@@ -125,7 +125,10 @@ export function createSiteOperations(options: {
       return {
         site: operation.site,
         untrustedSiteData: true,
-        data: redact(envelope.data),
+        data: redactAbilityResult(
+          envelope.data,
+          operation.kind === "run" ? operation.ability : undefined,
+        ),
       };
     },
   };

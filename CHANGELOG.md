@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- File uploads through the HQ MCP connector now receive the temporary upload
+  token needed to transfer the file, where it was previously hidden.
+
 ## 1.0.0-beta2 - 2026-09-28
 
 ### Added
