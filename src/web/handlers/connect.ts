@@ -157,7 +157,10 @@ export function createConnectHandler(context: RouteContext): RouteHandler {
                 );
           const authorized: DashboardNotice = {
             level: "ok",
-            message: `Authorization completed. ${site.siteUrl} Check the connection status below.`,
+            message:
+              outcome.existingProfile === undefined
+                ? `Authorization completed. ${site.siteUrl} Check the connection status below.`
+                : `This site is already connected as ${outcome.existingProfile}. ${site.siteUrl} Novamira HQ kept that connection instead of adding the site twice.`,
           };
           if (warm === undefined) {
             // Nothing warm to repaint: say so with the toast and leave the

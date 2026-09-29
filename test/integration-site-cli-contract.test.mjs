@@ -89,6 +89,10 @@ function scripted({ list, status }) {
 }
 
 const isAuthStatus = (invocation) => invocation.args.includes("status");
+const isSitesList = (invocation) =>
+  invocation.args.includes("sites") && invocation.args.includes("list");
+/** The children a connect ran after its duplicate check. */
+const afterListing = (calls) => calls.filter((call) => !isSitesList(call));
 const siteOf = (invocation) =>
   invocation.args[invocation.args.indexOf("--site") + 1];
 
@@ -1470,8 +1474,8 @@ test("reauthorization checks current access and skips login when already authori
   assert.deepEqual(await integration.connect(PROFILE.siteUrl, "prod"), {
     kind: "connected",
   });
-  assert.equal(calls.length, 1);
-  assert.deepEqual(calls[0].args, authStatusArgs(10_000, "prod"));
+  assert.equal(afterListing(calls).length, 1);
+  assert.deepEqual(afterListing(calls)[0].args, authStatusArgs(10_000, "prod"));
 });
 
 test("reauthorization does not open login for unreachable or malformed status", async () => {
@@ -1485,7 +1489,7 @@ test("reauthorization does not open login for unreachable or malformed status", 
       (await integration.connect(PROFILE.siteUrl, "prod")).kind,
       "failed",
     );
-    assert.equal(calls.length, 1);
+    assert.equal(afterListing(calls).length, 1);
   }
 });
 
@@ -1508,7 +1512,71 @@ test("token expiry alone never launches interactive reauthorization", async () =
     kind: "failed",
     reason: "token_refresh_pending",
   });
-  assert.equal(calls.length, 1);
+  assert.equal(afterListing(calls).length, 1);
+});
+
+test("connecting an already connected URL reuses its profile instead of adding a duplicate", async () => {
+  const other = {
+    name: "other",
+    siteUrl: "https://other.example.com",
+    origin: "https://other.example.com",
+  };
+  const script = (invocation) =>
+    exited(
+      isSitesList(invocation)
+        ? success([other, PROFILE])
+        : isAuthStatus(invocation)
+          ? success(AUTH_OK)
+          : success({}),
+    );
+
+  // No name, and a different name: both reuse "prod" and never log in again.
+  for (const requested of [undefined, "prod-2"]) {
+    const { integration, calls } = harness(script);
+    assert.deepEqual(await integration.connect(PROFILE.siteUrl, requested), {
+      kind: "connected",
+      existingProfile: "prod",
+    });
+    assert.deepEqual(
+      afterListing(calls).map((call) => call.args),
+      [authStatusArgs(10_000, "prod")],
+    );
+  }
+
+  // Asking for the profile that already holds the URL is not a reuse.
+  const same = harness(script);
+  assert.deepEqual(await same.integration.connect(PROFILE.siteUrl, "prod"), {
+    kind: "connected",
+  });
+
+  // A site not yet connected still logs in under the requested name.
+  const fresh = harness((invocation) =>
+    exited(
+      isSitesList(invocation)
+        ? success([other])
+        : isAuthStatus(invocation)
+          ? failure("site_not_found")
+          : success({}),
+    ),
+  );
+  assert.deepEqual(
+    await fresh.integration.connect("https://new.example.com", "new-site"),
+    { kind: "connected" },
+  );
+  assert.deepEqual(
+    fresh.calls.at(-1).args,
+    authLoginArgs("https://new.example.com", "new-site"),
+  );
+});
+
+test("a failed duplicate check never blocks connecting", async () => {
+  const { integration, calls } = harness((invocation) =>
+    exited(isSitesList(invocation) ? failure("network_error") : success({})),
+  );
+  assert.deepEqual(await integration.connect("https://example.com"), {
+    kind: "connected",
+  });
+  assert.deepEqual(calls.at(-1).args, authLoginArgs("https://example.com"));
 });
 
 test("siteInventory lists once and derives matched and CLI-only profiles together", async () => {

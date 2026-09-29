@@ -109,7 +109,14 @@ export interface ConnectionSnapshot {
  * put a subprocess's stderr on the page.
  */
 export type ConnectOutcome =
-  | { readonly kind: "connected" }
+  | {
+      readonly kind: "connected";
+      /**
+       * The existing profile HQ reused because it already holds this site's
+       * URL. Absent when the connection used the requested or default name.
+       */
+      readonly existingProfile?: string;
+    }
   | { readonly kind: "failed"; readonly reason: UnavailableReason };
 
 /**

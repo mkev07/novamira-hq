@@ -13,6 +13,8 @@
 
 ### Fixed
 
+- Connecting a site that is already connected, with or without a different
+  name, now reuses the existing connection instead of adding the site twice.
 - Local development sites on `*.localhost` domains can now be connected over
   HTTP, matching the bundled Novamira CLI. Sites on `.local` domains connect
   over HTTPS, and HQ now explains how to enable it when plain HTTP is entered.

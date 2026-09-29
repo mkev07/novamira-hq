@@ -58,11 +58,13 @@ const REMOVE_PATH = "/_dashboard/site-profiles/remove";
 export interface SiteConnectSuccessView {
   readonly siteUrl: string;
   readonly profileName?: string;
+  /** The site already had this profile; HQ reused it instead of a duplicate. */
+  readonly alreadyConnected?: boolean;
 }
 
 /** Full-page completion for a newly connected direct site, never for Reconnect. */
 export function renderSiteConnectSuccess(view: SiteConnectSuccessView): Html {
-  return html`<section class="page connect-success-page"><header class="page-head"><div><h1 id="site-connected-title">Site connected</h1><p>Connection complete.</p></div></header><section class="how-to-card connect-success" aria-labelledby="site-connected-title"><span class="connect-success-mark" aria-hidden="true">✓</span><div><p><strong>${view.profileName ?? view.siteUrl}</strong> is now connected to Novamira HQ.</p>${view.profileName === undefined ? false : html`<p class="field-help">${view.siteUrl}</p>`}</div><div class="button-row"><a class="button primary"${hrefAttr(
+  return html`<section class="page connect-success-page"><header class="page-head"><div><h1 id="site-connected-title">${view.alreadyConnected === true ? "Site already connected" : "Site connected"}</h1><p>Connection complete.</p></div></header><section class="how-to-card connect-success" aria-labelledby="site-connected-title"><span class="connect-success-mark" aria-hidden="true">✓</span><div>${view.alreadyConnected === true ? html`<p>This site is already connected as <strong>${view.profileName ?? view.siteUrl}</strong>. Novamira HQ kept that connection instead of adding the site twice.</p>` : html`<p><strong>${view.profileName ?? view.siteUrl}</strong> is now connected to Novamira HQ.</p>`}${view.profileName === undefined ? false : html`<p class="field-help">${view.siteUrl}</p>`}</div><div class="button-row"><a class="button primary"${hrefAttr(
     url("/sites"),
   )}>Open Sites</a><a class="button secondary"${hrefAttr(
     url("/sites", { new: "cli" }),

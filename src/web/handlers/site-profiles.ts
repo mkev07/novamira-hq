@@ -245,7 +245,14 @@ export function createSiteProfileConnectHandler(
             signals: defaultDashboardSignals(context.token),
             siteConnectSuccess: {
               siteUrl: site.siteUrl,
-              ...(name === "" ? {} : { profileName: name }),
+              ...(outcome.existingProfile !== undefined
+                ? {
+                    profileName: outcome.existingProfile,
+                    alreadyConnected: true,
+                  }
+                : name === ""
+                  ? {}
+                  : { profileName: name }),
             },
           },
           signals: {

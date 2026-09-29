@@ -48,7 +48,12 @@ import type { ConnectOutcome, UnavailableReason } from "../connection-state.js";
 import { CliError } from "../errors.js";
 import { isSiteProfileName } from "../site-profiles.js";
 import { interpretChildOutcome } from "./classify.js";
-import { authStatusArgs, siteCliChildEnv } from "./site-cli.js";
+import {
+  authStatusArgs,
+  parseSitesList,
+  siteCliChildEnv,
+  sitesListArgs,
+} from "./site-cli.js";
 import { verdictFor } from "./verdict.js";
 import { originOf } from "./origin.js";
 import {
@@ -117,7 +122,43 @@ export function createConnectAction(
   const maxStdoutBytes = options.maxStdoutBytes ?? DEFAULT_MAX_STDOUT_BYTES;
   const maxStderrBytes = options.maxStderrBytes ?? DEFAULT_MAX_STDERR_BYTES;
 
-  return async (siteUrl: string, name?: string): Promise<ConnectOutcome> => {
+  /**
+   * The profile that already holds `siteUrl`, if any. One site gets one
+   * profile: connecting it again, with or without another name, reuses the
+   * existing one instead of creating a duplicate. A listing that fails is not
+   * a reason to refuse the connection, so it answers `undefined`.
+   */
+  const existingProfile = async (
+    resolution: SiteCliResolution,
+    siteUrl: string,
+    preferred: string | undefined,
+  ): Promise<string | undefined> => {
+    const listTimeoutMs = Math.min(timeoutMs, 10_000);
+    const listed = interpretChildOutcome(
+      await options.spawn({
+        command: resolution.command,
+        args: [...resolution.prefixArgs, ...sitesListArgs(listTimeoutMs)],
+        env: siteCliChildEnv(options.environment),
+        timeoutMs: listTimeoutMs,
+        maxStdoutBytes,
+        maxStderrBytes,
+        signal: AbortSignal.timeout(listTimeoutMs + 1_000),
+      }),
+    );
+    if (listed.kind !== "data") return undefined;
+    const matches = (parseSitesList(listed.data) ?? [])
+      .filter((profile) => profile.siteUrl === siteUrl)
+      .map((profile) => profile.name);
+    if (preferred !== undefined && matches.includes(preferred))
+      return preferred;
+    return matches[0];
+  };
+
+  return async (
+    siteUrl: string,
+    requestedName?: string,
+  ): Promise<ConnectOutcome> => {
+    let name = requestedName;
     if (name !== undefined && !isSiteProfileName(name)) {
       throw new CliError(
         "usage_error",
@@ -132,6 +173,13 @@ export function createConnectAction(
       return failed("cli_failed");
     }
     if (resolution === undefined) return failed("cli_absent");
+
+    const existing = await existingProfile(resolution, siteUrl, name);
+    const reused = existing !== undefined && existing !== name;
+    if (existing !== undefined) name = existing;
+    const connected: ConnectOutcome = reused
+      ? { kind: "connected", existingProfile: existing }
+      : CONNECTED;
 
     // A stale dashboard row must not reauthorize an already usable profile.
     // Query only the explicitly selected profile; never use the CLI default.
@@ -157,7 +205,7 @@ export function createConnectAction(
         return failed("malformed_output");
       if (status?.restError === "network_error")
         return failed("site_unreachable");
-      if (verdict.kind === "connected") return CONNECTED;
+      if (verdict.kind === "connected") return connected;
       if (verdict.kind === "unavailable") return failed(verdict.reason);
       // Missing profiles (including a new custom name) or confirmed auth
       // failures may continue to the existing interactive login flow.
@@ -182,7 +230,7 @@ export function createConnectAction(
         // The payload is deliberately not inspected. `ok: true` from
         // `auth login` is the CLI saying the credential is written; anything
         // HQ read out of it would be site state HQ must not hold.
-        return CONNECTED;
+        return connected;
       case "site_missing":
         // `site_not_found` from a command that creates the profile means the
         // installed CLI does not mean what HQ means by `auth login <url>`.
