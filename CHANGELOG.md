@@ -13,6 +13,9 @@
 
 ### Fixed
 
+- When a site cannot be reached or is not ready during connection, HQ now asks
+  whether Novamira is installed and active. The message points to Setup
+  Novamira only where the dashboard offers it for that site.
 - File uploads through the HQ MCP connector now receive the temporary upload
   token needed to transfer the file, where it was previously hidden.
 

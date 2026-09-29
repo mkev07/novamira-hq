@@ -161,11 +161,28 @@ const UNAVAILABLE_HINTS: Readonly<Record<UnavailableReason, string>> = {
   deadline_exceeded:
     "Checking connection state took too long and was stopped; try again.",
   site_unreachable:
-    "The site could not be reached to confirm the connection; try again.",
+    "The site could not be reached to confirm the connection. Is Novamira installed and active? Check that the site is online and the plugin is active, then try again.",
   site_incompatible:
-    "The site is not ready for Novamira. The plugin may be missing, inactive or incompatible, or required AI Abilities may be unavailable. Use Setup Novamira when this site belongs to a connected hosting account; otherwise install or update Novamira on the site, then reconnect.",
+    "The site is not ready for Novamira. Is Novamira installed and active? The plugin may be missing, inactive or incompatible, or required AI Abilities may be unavailable. Install or update Novamira on the site, then reconnect.",
 };
 
-export function unavailableHint(reason: UnavailableReason): string {
+/**
+ * `site_incompatible` where the dashboard offers Setup Novamira for the site.
+ * Only a caller that renders that action may point at it.
+ */
+const SETUP_AVAILABLE_INCOMPATIBLE_HINT =
+  "The site is not ready for Novamira. Is Novamira installed and active? The plugin may be missing, inactive or incompatible, or required AI Abilities may be unavailable. Use Setup Novamira to install or update it, then reconnect.";
+
+export interface UnavailableHintOptions {
+  /** True only where Setup Novamira is offered for this site. */
+  readonly setupAvailable?: boolean;
+}
+
+export function unavailableHint(
+  reason: UnavailableReason,
+  options: UnavailableHintOptions = {},
+): string {
+  if (reason === "site_incompatible" && options.setupAvailable === true)
+    return SETUP_AVAILABLE_INCOMPATIBLE_HINT;
   return UNAVAILABLE_HINTS[reason];
 }

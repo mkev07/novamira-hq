@@ -133,7 +133,15 @@ export function createConnectHandler(context: RouteContext): RouteHandler {
         );
         if (outcome.kind === "failed") {
           // A fixed sentence from a closed set. No child output, ever.
-          patchToast(stream, danger(unavailableHint(outcome.reason)));
+          // Setup is offered only where the Sites page sent a hosting target.
+          patchToast(
+            stream,
+            danger(
+              unavailableHint(outcome.reason, {
+                setupAvailable: hostingProfile !== "" && envId !== "",
+              }),
+            ),
+          );
         } else {
           const options = {
             profile: (request.query.get("profile") ?? "").trim(),

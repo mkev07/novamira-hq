@@ -1375,6 +1375,34 @@ test("a CLI profile on a site without a compatible Novamira setup is explicit", 
   assert.ok(!markup.includes(">Unknown</span>"));
 });
 
+test("the not-ready hint names Setup Novamira only where Setup is offered", async () => {
+  const { unavailableHint } = await import("../dist/connection-state.js");
+  const { connectionView } = await import("../dist/web/views/types.js");
+  const result = {
+    state: "unavailable",
+    profiles: [],
+    reason: "site_incompatible",
+  };
+  for (const hint of [
+    unavailableHint("site_incompatible"),
+    connectionView(result, true).hint,
+    connectionView(result, true, false).hint,
+  ]) {
+    assert.ok(hint.includes("Is Novamira installed and active?"));
+    assert.ok(!hint.includes("Setup"), hint);
+  }
+  for (const hint of [
+    unavailableHint("site_incompatible", { setupAvailable: true }),
+    connectionView(result, true, true).hint,
+  ])
+    assert.ok(hint.includes("Use Setup Novamira"), hint);
+  assert.ok(
+    unavailableHint("site_unreachable").includes(
+      "Is Novamira installed and active?",
+    ),
+  );
+});
+
 test("20: renaming a CLI site posts the new name and uses only warm hosting inventory", async () => {
   const siteProfiles = {
     profiles: [
