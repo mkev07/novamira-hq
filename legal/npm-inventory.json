@@ -1,11 +1,11 @@
 {
   "reviewedAt": "2026-09-28",
   "scope": "All npm lock entries, including development tools; not a binary SBOM. License identifiers are declarations from installed package manifests.",
-  "lockSha256": "730e7555993ff8782d1a174835fc2703260a916831136f7ae1c85355ed469414",
+  "lockSha256": "2db83aace7ea55ef1f5403ae0fdf9987dd3920e9b2c71d94076562c9474e9d0e",
   "packages": [
     {
       "name": "@novamira/cli",
-      "version": "1.3.2",
+      "version": "1.3.3",
       "license": "AGPL-3.0-or-later"
     },
     {
