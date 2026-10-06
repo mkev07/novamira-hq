@@ -28,6 +28,7 @@ import { createPressableClient } from "./pressable.js";
 import { createPleskClient } from "./plesk.js";
 import { createRocketNetClient } from "./rocketnet.js";
 import { createWpEngineClient } from "./wpengine.js";
+import { createXCloudClient } from "./xcloud.js";
 
 /**
  * Every supported provider, keyed by `ProviderKind`. Typed as the total record
@@ -45,6 +46,7 @@ export const PROVIDER_REGISTRY: Readonly<
   hostinger: createHostingerClient,
   cloudways: createCloudwaysClient,
   plesk: createPleskClient,
+  xcloud: createXCloudClient,
 };
 
 export {
@@ -57,4 +59,5 @@ export {
   createPleskClient,
   createRocketNetClient,
   createWpEngineClient,
+  createXCloudClient,
 };

@@ -5,6 +5,7 @@ import assert from "node:assert/strict";
 import { Readable } from "node:stream";
 import test from "node:test";
 import { runMcpServer } from "../dist/mcp/index.js";
+import { createSiteOperations } from "../dist/integration/operations.js";
 import { CliError } from "../dist/errors.js";
 
 function request(id, method, params) {
@@ -875,4 +876,58 @@ test("MCP preserves framing and expected argument failures are tool results", as
     code: -32601,
     message: "Method not found",
   });
+});
+
+test("upload grants preserve only the root token through CLI integration and MCP", async () => {
+  const grant = {
+    upload_url: "https://example.test/wp-json/novamira/v1/upload",
+    upload_token: "temporary-upload.grant",
+    access_token: "private-oauth-value",
+    password: "private-password-value",
+    nested: { upload_token: "nested-private-value" },
+  };
+  const siteOperations = createSiteOperations({
+    environment: {},
+    resolve: async () => ({ command: "novamira", prefixArgs: [] }),
+    spawn: async () => ({
+      kind: "exited",
+      code: 0,
+      stdout: JSON.stringify({ ok: true, data: grant }),
+      stderr: "",
+    }),
+  });
+  const { messages } = await session(
+    [
+      initialize,
+      initialized,
+      ...[
+        ["wordpress_run", "novamira/create-upload-link"],
+        ["wordpress_run", "novamira/other"],
+        ["wordpress_describe", "novamira/create-upload-link"],
+      ].map(([name, ability], index) =>
+        request(index + 2, "tools/call", {
+          name,
+          arguments: {
+            site: "example",
+            ability,
+            ...(name === "wordpress_run" ? { input: {} } : {}),
+          },
+        }),
+      ),
+    ],
+    { siteOperations },
+  );
+  for (const id of [2, 3, 4]) {
+    const result = messages.find((message) => message.id === id).result;
+    assert.notEqual(result.isError, true);
+    const { data } = JSON.parse(result.content[0].text);
+    assert.equal(
+      data.upload_token,
+      id === 2 ? grant.upload_token : "[REDACTED]",
+    );
+    assert.equal(data.access_token, "[REDACTED]");
+    assert.equal(data.password, "[REDACTED]");
+    assert.equal(data.nested.upload_token, "[REDACTED]");
+    assert.equal(data.upload_url, grant.upload_url);
+  }
 });

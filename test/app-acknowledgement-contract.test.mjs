@@ -205,7 +205,7 @@ test("the app explains setup approval, overwrite risks and independent backups",
     "backup in a safe location, separate from the site",
     "This acknowledgement does not authorize operations",
     "Continue",
-    "site connection CLI is included",
+    "Continue to add a hosting account",
     "/_dashboard/app/acknowledge",
   ])
     assert.ok(markup.includes(value), value);

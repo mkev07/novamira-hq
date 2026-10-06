@@ -162,13 +162,18 @@ and make your sites available to compatible AI agents through one connection.
 - Connect an MCP-compatible AI client once and use it across your sites.
 
 Novamira HQ currently supports Kinsta, InstaWP, Pantheon, Pressable, WP Engine,
-Rocket.net, Hostinger, Cloudways, and Plesk. Available operations vary by provider.
+Rocket.net, Hostinger, Cloudways, Plesk, and xCloud. Available operations vary by provider.
 Plesk accounts can list hosted domains. An active WP Toolkit adds WordPress
 installation discovery, Novamira setup, WordPress backup and restore, and
 directional copying between two selected WordPress installations. Plesk copying
 requires an explicit database and/or WP Toolkit files scope; selected files and
 a separate search-and-replace step are not supported. WP Toolkit excludes
 WordPress configuration and server rewrite files from its default file copy.
+xCloud accounts list WordPress sites with their staging sites, and support
+backups, full-page cache purges, plugin and theme updates, access logs, and site
+events. The xCloud API cannot install plugins, create or push staging sites, or
+restore backups, so Novamira setup, pushes, and restores are not available
+there; install the Novamira plugin yourself and connect the site by URL.
 
 ## How it works
 

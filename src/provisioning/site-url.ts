@@ -77,9 +77,19 @@ function bareHostname(hostname: string): string {
     : hostname;
 }
 
+/**
+ * The site CLI's own loopback rule, which HQ must match: a URL HQ accepts is
+ * handed to the CLI, and one HQ refuses never reaches it. RFC 6761 section 6.3
+ * reserves `localhost` and its subdomains for loopback.
+ */
 function isLoopback(hostname: string): boolean {
-  const host = bareHostname(hostname).toLowerCase();
-  return host === "localhost" || host === "::1" || IPV4_LOOPBACK.test(host);
+  const host = bareHostname(hostname).toLowerCase().replace(/\.$/, "");
+  return (
+    host === "localhost" ||
+    host.endsWith(".localhost") ||
+    host === "::1" ||
+    IPV4_LOOPBACK.test(host)
+  );
 }
 
 /** `url` is the {@link safeUrl} form, never the operator's raw string. */
@@ -136,8 +146,13 @@ export function normalizeSiteUrl(
     }
     if (!isLoopback(url.hostname)) {
       if (!allowInsecure) {
+        // `.local` is mDNS, not loopback: it may name another machine on the
+        // network, so it gets HTTPS rather than an HTTP exception.
+        const local = /\.local\.?$/iu.test(url.hostname);
         throw invalid(
-          `The WordPress site URL ${printable} uses plain HTTP. Use https, or set NOVAMIRA_HQ_ALLOW_INSECURE_HTTP=1 to accept it.`,
+          local
+            ? `The WordPress site URL ${printable} uses plain HTTP. Local development sites on .local need HTTPS: enable SSL for the site in your local development tool (in Local, SSL → Trust), then use https://${url.host}.`
+            : `The WordPress site URL ${printable} uses plain HTTP. Use https, or set NOVAMIRA_HQ_ALLOW_INSECURE_HTTP=1 to accept it.`,
           printable,
           source,
         );

@@ -21,6 +21,7 @@ export const PROVIDER_KINDS = [
   "hostinger",
   "cloudways",
   "plesk",
+  "xcloud",
 ] as const;
 
 export type ProviderKind = (typeof PROVIDER_KINDS)[number];
@@ -62,6 +63,8 @@ export const DEFAULT_CLOUDWAYS_CREDENTIAL_ENV = "CLOUDWAYS_ACCESS_TOKEN";
 // provide its own panel URL before the adapter makes any request.
 export const DEFAULT_PLESK_API_BASE_URL = "https://plesk.invalid:8443";
 export const DEFAULT_PLESK_CREDENTIAL_ENV = "PLESK_API_KEY";
+export const DEFAULT_XCLOUD_API_BASE_URL = "https://app.xcloud.host/api/v1";
+export const DEFAULT_XCLOUD_CREDENTIAL_ENV = "XCLOUD_API_TOKEN";
 
 export interface ProviderDefaults {
   readonly apiBaseUrl: string;
@@ -118,6 +121,10 @@ export const PROVIDER_DEFAULTS: Readonly<
   plesk: {
     apiBaseUrl: DEFAULT_PLESK_API_BASE_URL,
     credentialEnv: DEFAULT_PLESK_CREDENTIAL_ENV,
+  },
+  xcloud: {
+    apiBaseUrl: DEFAULT_XCLOUD_API_BASE_URL,
+    credentialEnv: DEFAULT_XCLOUD_CREDENTIAL_ENV,
   },
 };
 

@@ -432,6 +432,24 @@ test("plain HTTP is loopback-only unless HQ's own opt-in is set", async () => {
   assert.equal(local.siteUrl, "http://localhost:8080");
   assert.equal(local.insecure, false);
   assert.equal(siteOf("http://127.0.0.1:8080").insecure, false);
+  // RFC 6761 loopback subdomains, as the bundled site CLI accepts them.
+  const sub = siteOf("http://mysite.localhost");
+  assert.equal(sub.siteUrl, "http://mysite.localhost");
+  assert.equal(sub.insecure, false);
+  assert.equal(siteOf("http://MySite.Localhost.").insecure, false);
+  await raised(
+    () => siteOf("http://localhost.example.com"),
+    "a public host that merely starts with localhost",
+  );
+  // .local is mDNS, not loopback: HTTPS only, with guidance for Local users.
+  const mdns = await raised(
+    () => siteOf("http://mysite.local"),
+    "a .local host over HTTP",
+  );
+  assert.equal(mdns.code, "usage_error");
+  assert.match(mdns.message, /need HTTPS/);
+  assert.match(mdns.message, /https:\/\/mysite\.local\./);
+  assert.equal(siteOf("https://mysite.local").siteUrl, "https://mysite.local");
 
   // 27: a public host over HTTP needs the opt-in, and is flagged when accepted.
   const refused = await raised(

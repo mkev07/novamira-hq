@@ -383,6 +383,7 @@ export interface ConnectionView {
 export function connectionView(
   result: ConnectionResult,
   cliAvailable: boolean,
+  setupAvailable = false,
 ): ConnectionView {
   if (!cliAvailable) {
     return {
@@ -399,7 +400,7 @@ export function connectionView(
       hint:
         result.reason === undefined
           ? SITE_CLI_INSTALL_HINT
-          : unavailableHint(result.reason),
+          : unavailableHint(result.reason, { setupAvailable }),
     };
   }
   return { state: result.state, profiles: result.profiles };

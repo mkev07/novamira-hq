@@ -1,5 +1,31 @@
 # Changelog
 
+## 1.0.0-beta3 - 2026-10-01
+
+### Added
+
+- xCloud hosting accounts can now be connected with an API token. HQ lists
+  WordPress sites and their staging sites, creates backups, purges the page
+  cache, updates plugins and themes, and shows access logs and site events.
+  Without a team, HQ uses the first team the token can access. The xCloud API
+  cannot install plugins, create or push staging sites, or restore backups, so
+  those actions stay unavailable for xCloud.
+
+### Fixed
+
+- Connecting a site that is already connected, with or without a different
+  name, now reuses the existing connection instead of adding the site twice.
+- Local development sites on `*.localhost` domains can now be connected over
+  HTTP, matching the bundled Novamira CLI. Sites on `.local` domains connect
+  over HTTPS, and HQ now explains how to enable it when plain HTTP is entered.
+- In the desktop app, site connections now trust certificates in the system
+  trust store, such as the one Local installs for HTTPS `.local` sites.
+- When a site cannot be reached or is not ready during connection, HQ now asks
+  whether Novamira is installed and active. The message points to Setup
+  Novamira only where the dashboard offers it for that site.
+- File uploads through the HQ MCP connector now receive the temporary upload
+  token needed to transfer the file, where it was previously hidden.
+
 ## 1.0.0-beta2 - 2026-09-28
 
 ### Added

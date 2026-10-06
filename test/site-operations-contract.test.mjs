@@ -171,3 +171,43 @@ test("spawn seam writes JSON stdin and closes it without a shell", async () => {
   assert.equal(result.kind, "exited");
   assert.equal(result.stdout, '{"value":"hello"}');
 });
+
+test("upload token exemption never exposes nested objects or failed results", async () => {
+  const operation = {
+    kind: "run",
+    site: "example",
+    ability: "novamira/create-upload-link",
+    input: {},
+    approveDestructive: false,
+  };
+  const { service } = fixture({
+    kind: "exited",
+    code: 0,
+    stdout: JSON.stringify({
+      ok: true,
+      data: { upload_token: { password: "private-value" } },
+    }),
+    stderr: "",
+  });
+  assert.equal(
+    (await service.execute(operation)).data.upload_token,
+    "[REDACTED]",
+  );
+  const failed = fixture({
+    kind: "exited",
+    code: 1,
+    stdout: JSON.stringify({
+      ok: false,
+      error: {
+        code: "network_error",
+        message: "private-value",
+        upload_token: "private-value",
+      },
+    }),
+    stderr: "private-value",
+  });
+  await assert.rejects(
+    failed.service.execute(operation),
+    (error) => !error.message.includes("private-value"),
+  );
+});

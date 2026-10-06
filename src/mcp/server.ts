@@ -28,6 +28,7 @@ import {
 } from "../hosting/environment-push.js";
 import type { HostingClientFactory } from "../hosting/factory.js";
 import type { ProviderClient } from "../hosting/client.js";
+import { redactAbilityResult } from "../output/ability-result.js";
 import { redact, redactText } from "../output/redact.js";
 import type { SiteOperations } from "../integration/index.js";
 import { MCP_GUIDE, MCP_INSTRUCTIONS } from "./guidance.js";
@@ -656,8 +657,28 @@ function restoreSelection(
   };
 }
 
-function toolResult(value: unknown): Readonly<Record<string, unknown>> {
-  const safe = redact(value);
+function toolResult(
+  value: unknown,
+  ability?: string,
+): Readonly<Record<string, unknown>> {
+  let safe = redact(value);
+  if (
+    ability !== undefined &&
+    value !== null &&
+    typeof value === "object" &&
+    !Array.isArray(value) &&
+    safe !== null &&
+    typeof safe === "object" &&
+    !Array.isArray(safe)
+  ) {
+    safe = {
+      ...safe,
+      data: redactAbilityResult(
+        (value as Record<string, unknown>).data,
+        ability,
+      ),
+    };
+  }
   return { content: [{ type: "text", text: JSON.stringify(safe) }] };
 }
 
@@ -865,6 +886,7 @@ async function callClientlessTool(
           input: argumentsValue.input,
           approveDestructive: argumentsValue.approveDestructive === true,
         }),
+        requiredString(argumentsValue, "ability"),
       );
     }
   }

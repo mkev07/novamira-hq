@@ -51,6 +51,12 @@ test("system CA support preserves overrides and never disables certificate valid
     };
     const child = siteCliEnvironment(env, platform);
     assert.equal(child.NODE_USE_SYSTEM_CA, "1");
+    assert.equal(child.DENO_TLS_CA_STORE, "mozilla,system");
+    assert.equal(
+      siteCliEnvironment({ DENO_TLS_CA_STORE: "mozilla" }, platform)
+        .DENO_TLS_CA_STORE,
+      "mozilla",
+    );
     assert.equal(child.NODE_OPTIONS, env.NODE_OPTIONS);
     assert.equal(child.NODE_TLS_REJECT_UNAUTHORIZED, undefined);
     if (platform !== "darwin") assert.equal(child.PATH, env.PATH);

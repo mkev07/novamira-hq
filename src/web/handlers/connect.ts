@@ -142,7 +142,15 @@ export function createConnectHandler(context: RouteContext): RouteHandler {
         if (prompt.shown) patchDeviceLogin(stream, site.siteUrl);
         if (outcome.kind === "failed") {
           // A fixed sentence from a closed set. No child output, ever.
-          patchToast(stream, danger(unavailableHint(outcome.reason)));
+          // Setup is offered only where the Sites page sent a hosting target.
+          patchToast(
+            stream,
+            danger(
+              unavailableHint(outcome.reason, {
+                setupAvailable: hostingProfile !== "" && envId !== "",
+              }),
+            ),
+          );
         } else {
           const options = {
             profile: (request.query.get("profile") ?? "").trim(),
@@ -158,7 +166,10 @@ export function createConnectHandler(context: RouteContext): RouteHandler {
                 );
           const authorized: DashboardNotice = {
             level: "ok",
-            message: `Authorization completed. ${site.siteUrl} Check the connection status below.`,
+            message:
+              outcome.existingProfile === undefined
+                ? `Authorization completed. ${site.siteUrl} Check the connection status below.`
+                : `This site is already connected as ${outcome.existingProfile}. ${site.siteUrl} Novamira HQ kept that connection instead of adding the site twice.`,
           };
           if (warm === undefined) {
             // Nothing warm to repaint: say so with the toast and leave the

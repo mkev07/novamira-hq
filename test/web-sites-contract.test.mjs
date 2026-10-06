@@ -1025,6 +1025,19 @@ test("14: a connect whose cache entry has expired says so with the toast alone",
   assert.equal(listCalls.length, 0, "connect never lists sites");
 });
 
+test("14b: connecting a hosting site that is already connected names the kept connection", async () => {
+  const { server } = await fixture({
+    connect: { kind: "connected", existingProfile: "manual-prod" },
+  });
+  const { recorder } = await sse(
+    server,
+    connectRequest("url=https%3A%2F%2Fenv-a.example.com&profile=__all__"),
+  );
+  const toast = recorder.find("toast").markup;
+  assert.ok(toast.includes("already connected as manual-prod"));
+  assert.ok(!toast.includes("Authorization completed."));
+});
+
 test("15: both routes refuse a missing or wrong token", async () => {
   const { server, connectCalls, listCalls } = await fixture();
   for (const [method, path] of [
@@ -1373,6 +1386,51 @@ test("a CLI profile on a site without a compatible Novamira setup is explicit", 
   assert.ok(!markup.includes(">Renew access</span>"));
   assert.ok(!markup.includes('class="status-action'));
   assert.ok(!markup.includes(">Unknown</span>"));
+});
+
+test("reconnecting a site that is already connected says so instead of adding it twice", async () => {
+  const { renderSiteConnectSuccess } =
+    await import("../dist/web/views/site-profiles.js");
+  const reused = renderSiteConnectSuccess({
+    siteUrl: "https://example.com",
+    profileName: "prod",
+    alreadyConnected: true,
+  }).markup;
+  assert.ok(reused.includes("Site already connected"));
+  assert.ok(reused.includes("already connected as <strong>prod</strong>"));
+  const fresh = renderSiteConnectSuccess({
+    siteUrl: "https://example.com",
+  }).markup;
+  assert.ok(fresh.includes(">Site connected<"));
+  assert.ok(!fresh.includes("already connected"));
+});
+
+test("the not-ready hint names Setup Novamira only where Setup is offered", async () => {
+  const { unavailableHint } = await import("../dist/connection-state.js");
+  const { connectionView } = await import("../dist/web/views/types.js");
+  const result = {
+    state: "unavailable",
+    profiles: [],
+    reason: "site_incompatible",
+  };
+  for (const hint of [
+    unavailableHint("site_incompatible"),
+    connectionView(result, true).hint,
+    connectionView(result, true, false).hint,
+  ]) {
+    assert.ok(hint.includes("Is Novamira installed and active?"));
+    assert.ok(!hint.includes("Setup"), hint);
+  }
+  for (const hint of [
+    unavailableHint("site_incompatible", { setupAvailable: true }),
+    connectionView(result, true, true).hint,
+  ])
+    assert.ok(hint.includes("Use Setup Novamira"), hint);
+  assert.ok(
+    unavailableHint("site_unreachable").includes(
+      "Is Novamira installed and active?",
+    ),
+  );
 });
 
 test("20: renaming a CLI site posts the new name and uses only warm hosting inventory", async () => {

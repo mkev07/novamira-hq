@@ -109,7 +109,14 @@ export interface ConnectionSnapshot {
  * put a subprocess's stderr on the page.
  */
 export type ConnectOutcome =
-  | { readonly kind: "connected" }
+  | {
+      readonly kind: "connected";
+      /**
+       * The existing profile HQ reused because it already holds this site's
+       * URL. Absent when the connection used the requested or default name.
+       */
+      readonly existingProfile?: string;
+    }
   | { readonly kind: "failed"; readonly reason: UnavailableReason };
 
 /**
@@ -138,8 +145,7 @@ export const SITE_CLI_OVERRIDE_ENV = "NOVAMIRA_HQ_SITE_CLI";
  * not a diagnostic.
  */
 export const SITE_CLI_INSTALL_HINT =
-  "Repair or update Novamira HQ to restore its bundled site CLI and connection state, " +
-  `or set ${SITE_CLI_OVERRIDE_ENV} to its executable.`;
+  "Site connections are unavailable. Repair or update Novamira HQ to restore them.";
 
 /**
  * A fixed, non-secret sentence per reason. Exhaustive over the union, so a new
@@ -148,25 +154,42 @@ export const SITE_CLI_INSTALL_HINT =
  */
 const UNAVAILABLE_HINTS: Readonly<Record<UnavailableReason, string>> = {
   token_refresh_pending:
-    "The site connection is saved. The CLI handles token renewal when used; token expiry alone does not require signing in again. Reachability has not been verified.",
+    "The site connection is saved. Authorization renews automatically when you use it; you do not need to sign in again just because it has expired. Site availability has not been verified.",
   cli_absent: SITE_CLI_INSTALL_HINT,
   cli_incompatible:
-    "Update Novamira HQ or its explicitly selected external site CLI: this CLI version does not support the required commands.",
-  cli_timeout: "The Novamira site CLI did not answer in time; try again.",
+    "Update Novamira HQ to restore compatibility with site connections.",
+  cli_timeout: "The site connection check did not finish in time. Try again.",
   cli_failed:
-    "The site CLI could not complete the operation. For connection failures, run the bundled site CLI's auth login command in a terminal to see the underlying error.",
+    "Novamira HQ could not complete the site operation. Try again. If the problem continues, open Diagnostics.",
   malformed_output:
-    "The site CLI returned unreadable output. Repair or update Novamira HQ, or check its explicit external CLI override.",
+    "Novamira HQ could not read the site connection result. Repair or update Novamira HQ if the problem continues.",
   output_truncated:
-    "The Novamira site CLI returned more output than Novamira HQ reads; check that its version is current.",
+    "The site connection result was too large to read. Check that Novamira HQ is up to date.",
   deadline_exceeded:
     "Checking connection state took too long and was stopped; try again.",
   site_unreachable:
-    "The site could not be reached to confirm the connection; try again.",
+    "The site could not be reached to confirm the connection. Is Novamira installed and active? Check that the site is online and the plugin is active, then try again.",
   site_incompatible:
-    "The site is not ready for Novamira. The plugin may be missing, inactive or incompatible, or required AI Abilities may be unavailable. Use Setup Novamira when this site belongs to a connected hosting account; otherwise install or update Novamira on the site, then reconnect.",
+    "The site is not ready for Novamira. Is Novamira installed and active? The plugin may be missing, inactive or incompatible, or required AI Abilities may be unavailable. Install or update Novamira on the site, then reconnect.",
 };
 
-export function unavailableHint(reason: UnavailableReason): string {
+/**
+ * `site_incompatible` where the dashboard offers Setup Novamira for the site.
+ * Only a caller that renders that action may point at it.
+ */
+const SETUP_AVAILABLE_INCOMPATIBLE_HINT =
+  "The site is not ready for Novamira. Is Novamira installed and active? The plugin may be missing, inactive or incompatible, or required AI Abilities may be unavailable. Use Setup Novamira to install or update it, then reconnect.";
+
+export interface UnavailableHintOptions {
+  /** True only where Setup Novamira is offered for this site. */
+  readonly setupAvailable?: boolean;
+}
+
+export function unavailableHint(
+  reason: UnavailableReason,
+  options: UnavailableHintOptions = {},
+): string {
+  if (reason === "site_incompatible" && options.setupAvailable === true)
+    return SETUP_AVAILABLE_INCOMPATIBLE_HINT;
   return UNAVAILABLE_HINTS[reason];
 }

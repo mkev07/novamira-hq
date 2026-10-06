@@ -6,7 +6,7 @@ allowed-tools: Bash(novamira-hq:*)
 
 # Novamira HQ Hosting
 
-Use `novamira-hq hosting ...` for provider-neutral WordPress hosting operations. Kinsta, InstaWP, Pantheon, Pressable, WP Engine, Rocket.net, Hostinger, and Cloudways are implemented, but agents should use the generic hosting command names and inspect provider capabilities before reaching for a provider-specific workflow.
+Use `novamira-hq hosting ...` for provider-neutral WordPress hosting operations. Kinsta, InstaWP, Pantheon, Pressable, WP Engine, Rocket.net, Hostinger, Cloudways, Plesk, and xCloud are implemented, but agents should use the generic hosting command names and inspect provider capabilities before reaching for a provider-specific workflow.
 
 Always use `--json` for automation. Every hosting operation requires an explicit global `--profile`; there is no default and no single-profile fallback.
 

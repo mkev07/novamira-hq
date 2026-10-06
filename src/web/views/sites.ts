@@ -422,6 +422,7 @@ function hostingProfileMenu(
       connectionKey(group.profile, site.id, env.id),
     ),
     view.connections?.cliAvailable ?? false,
+    setupSupported(group.provider, env),
   );
   const restore = ["kinsta", "pantheon", "rocketnet", "instawp"].includes(
     group.provider,
@@ -435,6 +436,7 @@ function hostingProfileMenu(
     "wpengine",
     "cloudways",
     "instawp",
+    "xcloud",
   ].includes(group.provider)
     ? html`<a class="profile-menu-action"${hrefAttr(url("/backup-create", { profile: group.profile, site: site.id, env: env.id }))}>Create backup…</a>`
     : false;
@@ -486,6 +488,7 @@ function renderStateCell(
   const connection = connectionView(
     result,
     view.connections?.cliAvailable ?? false,
+    setupSupported(group.provider, env),
   );
   const address = siteAddress(env, site);
 
