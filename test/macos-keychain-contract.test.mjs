@@ -23,11 +23,29 @@ const account = "c".repeat(64);
 test("OS vault failure never switches to plaintext storage on any platform", async () => {
   const folder = await mkdtemp(join(tmpdir(), "hq-no-fallback-"));
   try {
+    // Bare `secret-tool` exits nonzero with usage, so on Linux a completed run
+    // passes the probe and the failure surfaces when the secret is stored.
+    const failing = {
+      execute: async () => ({
+        code: 1,
+        signal: null,
+        truncated: false,
+        stdout: "",
+      }),
+    };
+    const linux = await createCredentialStore(folder, new UnixFileSecurity(), {
+      platform: "linux",
+      executor: failing,
+    });
+    await assert.rejects(linux.replace(account, "secret"), {
+      code: "integration_unavailable",
+    });
     for (const platform of ["darwin", "linux", "win32"]) {
       for (const result of [
         { code: 1, signal: null, truncated: false, stdout: "" },
         { code: null, signal: "SIGTERM", truncated: false, stdout: "" },
       ]) {
+        if (platform === "linux" && result.code !== null) continue;
         await assert.rejects(
           createCredentialStore(folder, new UnixFileSecurity(), {
             platform,

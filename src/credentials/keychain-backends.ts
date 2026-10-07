@@ -302,7 +302,17 @@ export class MacOsKeychainBackend extends CommandCredentialBackend {
 
 export class LinuxSecretServiceBackend extends CommandCredentialBackend {
   async probe(): Promise<boolean> {
-    return this.available("secret-tool", ["--version"]);
+    // secret-tool has no version flag: run bare, it prints usage and exits 2.
+    // Any run to completion proves the executable is present; a signalled,
+    // truncated, or unspawnable child still means unusable.
+    try {
+      const result = await this.executor.execute("secret-tool", []);
+      return (
+        result.signal === null && !result.truncated && result.code !== null
+      );
+    } catch {
+      return false;
+    }
   }
 
   async read(account: string): Promise<string | undefined> {

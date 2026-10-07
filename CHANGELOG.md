@@ -4,6 +4,9 @@
 
 ### Fixed
 
+- On Linux, HQ now detects an installed `secret-tool`, so hosting credentials
+  and the Pro licence key save to the Secret Service instead of HQ reporting
+  that the OS credential service is unavailable.
 - Cloudways accounts can now be connected. HQ sent the Access Token in a
   header Cloudways no longer accepts, so every attempt failed with HTTP 400
   "Check the access token parameter" and the token never showed as used.
