@@ -1133,6 +1133,46 @@ test("16: matched CLI profiles stay in the hosting row and CLI-only sites are se
   );
 });
 
+test("an environment matches WordPress only by its own address, never its site's", async () => {
+  // Kinsta and WP Engine report the first environment's domain as the site
+  // domain, and Plesk reports the hosting container: matching either would
+  // let one connected install lend its status and actions to another.
+  const { server, inventoryCalls } = await fixture({
+    kinstaSites: [
+      {
+        id: "k1",
+        name: "k1",
+        displayName: "Kinsta",
+        status: "live",
+        primaryDomain: "staging.example.com",
+        environments: [
+          env("staging", { primaryDomain: "staging.example.com" }),
+          env("live", { primaryDomain: "https://www.example.com" }),
+          env("bare", { primaryDomain: "  " }),
+          env("unset", { primaryDomain: undefined }),
+        ],
+      },
+    ],
+  });
+  const response = await server.dispatch(
+    authorized("/_dashboard/sites?include_envs=true"),
+  );
+  await response.run(fakeSseStream().stream);
+  const origins = Object.fromEntries(
+    inventoryCalls
+      .flat()
+      .filter(({ key }) => key.startsWith("prod/k1/"))
+      .map(({ key, origins }) => [key, origins]),
+  );
+  assert.deepEqual(origins, {
+    "prod/k1/staging": ["staging.example.com"],
+    "prod/k1/live": ["https://www.example.com"],
+    // Without an address of its own, an environment falls back to the site's.
+    "prod/k1/bare": ["staging.example.com"],
+    "prod/k1/unset": ["staging.example.com"],
+  });
+});
+
 test("hosting actions prefer an authorized duplicate and explicitly target its name", async () => {
   for (const names of [
     ["a-expired", "z-authorized"],

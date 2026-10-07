@@ -5,7 +5,9 @@
  * The Cloudways provider client, ported from `internal/providers/cloudways.go`.
  *
  * Cloudways authenticates current integrations with an account-scoped Access
- * Token in `X-Access-Token`. HQ deliberately does not support the deprecated
+ * Token sent as `Authorization: Bearer`, the spec's only active security
+ * scheme. `X-Access-Token` belongs to a retired JWT flow and is rejected with
+ * HTTP 400. HQ deliberately does not support the deprecated
  * email + API-key OAuth exchange: it was never part of a public HQ release.
  *
  * Two Cloudways quirks shape everything below:
@@ -206,7 +208,7 @@ class CloudwaysClient implements ProviderClient {
       auth: dynamicAuth(() => {
         const token = context.secret.reveal();
         return {
-          headers: { "x-access-token": token },
+          headers: { authorization: `Bearer ${token}` },
           secrets: [token],
         };
       }),

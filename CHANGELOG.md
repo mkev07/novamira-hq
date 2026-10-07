@@ -1,5 +1,36 @@
 # Changelog
 
+## 1.0.0-beta4 - 2026-10-07
+
+### Changed
+
+- The bundled Novamira CLI is updated to 1.3.3. When `site-cli auth login`
+  opens the browser it now also prints the authorization URL, so it can be
+  opened in the browser where you are signed in to WordPress, and a login that
+  times out explains how to retry.
+
+### Fixed
+
+- In Sites, each hosting environment now shows as connected only when its own
+  address has a WordPress connection. Before, a Plesk subdomain could borrow
+  its parent domain's connection, and a Kinsta or WP Engine environment could
+  borrow another environment's, so Install Novamira Pro and Disconnect acted on
+  the wrong site. An environment connected under an address other than its own
+  now shows as not connected until it is connected with its own address.
+- On Linux, HQ now detects an installed `secret-tool`, so hosting credentials
+  and the Pro licence key save to the Secret Service instead of HQ reporting
+  that the OS credential service is unavailable.
+- Cloudways accounts can now be connected. HQ sent the Access Token in a
+  header Cloudways no longer accepts, so every attempt failed with HTTP 400
+  "Check the access token parameter" and the token never showed as used.
+- Backup lists in Hosting tools and the restore backup menu now show when each
+  backup was created as a readable date in your computer's time zone, with the
+  zone named next to it, instead of a raw provider timestamp. If the time zone
+  cannot be determined, dates are shown in UTC.
+- Hosting tools reports now show file sizes in readable units, such as 683 KB,
+  instead of raw byte counts, and long values such as backup file names wrap
+  inside their column instead of overlapping the next one.
+
 ## 1.0.0-beta3 - 2026-10-01
 
 ### Added

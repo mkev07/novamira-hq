@@ -12,6 +12,9 @@ import { renderHtml } from "../dist/web/html.js";
 import { createHostingToolsHandler } from "../dist/web/handlers/hosting-tools.js";
 import { registerSensitiveValues } from "../dist/output/redact.js";
 
+// Dates render in the computer's time zone; pin it so labels are stable.
+process.env.TZ = "UTC";
+
 const target = { siteId: "site-1", environmentId: "env-1" };
 function fixture(provider = "kinsta", overrides = {}) {
   const calls = [];
@@ -244,4 +247,79 @@ test("hosting page loads nothing automatically, escapes report content and offer
   assert.match(markup, /Clear object cache/);
   assert.match(markup, /hostingTools.loading/);
   assert.ok(!markup.includes("Restore backup"));
+});
+
+test("backup report shows provider timestamps as readable UTC dates", () => {
+  const markup = renderHtml(
+    renderHostingTools({
+      target: { profile: "a", site: "s", env: "e" },
+      provider: "kinsta",
+      selected: "backups",
+      result: {
+        data: {
+          environment: {
+            backups: [
+              { id: 1, created_at: Date.UTC(2026, 9, 7, 8, 5), size: 42 },
+              { id: 2, created_at: "2026-10-02T12:43:46.000000Z", size: 7 },
+              { id: 3, created_at: 1790000000, size: 9 },
+            ],
+          },
+        },
+      },
+    }),
+  );
+  assert.match(markup, /<td>07 Oct 2026, 08:05 UTC<\/td>/);
+  assert.match(markup, /<td>02 Oct 2026, 12:43 UTC<\/td>/);
+  assert.match(markup, /<td>21 Sept 2026, 14:13 UTC<\/td>/);
+  assert.match(markup, /<td>42 B<\/td>/);
+  assert.match(markup, /&quot;created_at&quot;: 1791360300000/);
+});
+
+test("backup dates use the local time zone and always name it", () => {
+  const render = () =>
+    renderHtml(
+      renderHostingTools({
+        target: { profile: "a", site: "s", env: "e" },
+        provider: "instawp",
+        selected: "backups",
+        result: {
+          data: {
+            backups: [{ id: "1", created_at: "2026-10-02T12:43:46.000000Z" }],
+          },
+        },
+      }),
+    );
+  try {
+    process.env.TZ = "Europe/Rome";
+    assert.match(render(), /<td>02 Oct 2026, 14:43 CEST<\/td>/);
+    process.env.TZ = "America/New_York";
+    assert.match(render(), /<td>02 Oct 2026, 08:43 GMT-4<\/td>/);
+  } finally {
+    process.env.TZ = "UTC";
+  }
+  assert.match(render(), /<td>02 Oct 2026, 12:43 UTC<\/td>/);
+});
+
+test("backup report shows byte sizes in readable units", () => {
+  const markup = renderHtml(
+    renderHostingTools({
+      target: { profile: "a", site: "s", env: "e" },
+      provider: "xcloud",
+      selected: "backups",
+      result: {
+        data: {
+          backups: [
+            { uuid: "a", file_name: "site.tar.gz", file_size: 683328 },
+            { uuid: "b", file_name: "db.sql", file_size: "172053" },
+            { uuid: "c", file_name: "big.tar.gz", file_size: 2_457_600_000 },
+            { uuid: "d", file_name: "tiny", file_size: 512 },
+            { uuid: "e", file_name: "odd", file_size: "unknown" },
+          ],
+        },
+      },
+    }),
+  );
+  for (const label of ["683 KB", "172 KB", "2.5 GB", "512 B", "unknown"])
+    assert.match(markup, new RegExp(`<td>${label}</td>`));
+  assert.match(markup, /&quot;file_size&quot;: 683328/);
 });

@@ -24,6 +24,7 @@ import {
   storedCredential,
 } from "../dist/config/schema.js";
 import {
+  BackendUnavailableError,
   CREDENTIAL_SERVICE,
   LinuxSecretServiceBackend,
   MacOsKeychainBackend,
@@ -303,6 +304,24 @@ test("a corrupt prior record is restored verbatim rather than deleted", async ()
   } finally {
     await rm(state.root, { recursive: true, force: true });
   }
+});
+
+test("the Linux probe accepts secret-tool's usage exit and rejects a missing tool", async () => {
+  const calls = [];
+  const usage = {
+    execute: async (command, args) => {
+      calls.push([command, ...args]);
+      return { code: 2, signal: null, truncated: false, stdout: "" };
+    },
+  };
+  assert.equal(await new LinuxSecretServiceBackend(usage).probe(), true);
+  assert.deepEqual(calls, [["secret-tool"]]);
+  const missing = {
+    execute: async () => {
+      throw new BackendUnavailableError();
+    },
+  };
+  assert.equal(await new LinuxSecretServiceBackend(missing).probe(), false);
 });
 
 test("a killed keychain command is an integration failure, never a missing credential", async () => {

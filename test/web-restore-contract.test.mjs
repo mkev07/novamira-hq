@@ -11,6 +11,9 @@ import { renderRestore } from "../dist/web/views/restore.js";
 import { renderHtml } from "../dist/web/html.js";
 import { parseRestoreForm } from "../dist/web/signals-input.js";
 
+// Dates render in the computer's time zone; pin it so labels are stable.
+process.env.TZ = "UTC";
+
 const target = { profile: "account", site: "site", env: "live" };
 function fixture(createOnly = false) {
   const calls = [];

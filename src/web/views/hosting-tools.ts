@@ -9,6 +9,7 @@ import * as ds from "../datastar.js";
 import { copyReport, get, post, signal } from "../expr.js";
 import { renderNotice } from "./layout.js";
 import { asRecord } from "../../json.js";
+import { formatTimestamp } from "../timestamp.js";
 
 export interface HostingToolsView {
   readonly target: HostingToolsTarget;
@@ -87,10 +88,43 @@ function renderRows(value: unknown): Html | false {
     .slice(0, 8);
   if (!keys.length)
     return html`<pre class="code-output">${JSON.stringify(value, null, 2)}</pre>`;
-  return html`<p class="field-help">Showing ${records.length} of ${rows.length} entries. Copy report includes the returned details.</p><div class="hosting-report-table"><table><thead><tr>${keys.map((key) => html`<th>${key.replaceAll("_", " ")}</th>`)}</tr></thead><tbody>${records.map((row) => html`<tr>${keys.map((key) => html`<td>${cell(row[key])}</td>`)}</tr>`)}</tbody></table></div>`;
+  return html`<p class="field-help">Showing ${records.length} of ${rows.length} entries. Copy report includes the returned details.</p><div class="hosting-report-table"><table><thead><tr>${keys.map((key) => html`<th>${key.replaceAll("_", " ")}</th>`)}</tr></thead><tbody>${records.map((row) => html`<tr>${keys.map((key) => html`<td>${cell(key, row[key])}</td>`)}</tr>`)}</tbody></table></div>`;
 }
 
-function cell(value: unknown): string {
+/** Timestamp-named columns read as dates; the copied report keeps raw values. */
+const TIMESTAMP_KEY =
+  /(?:^|_)(?:at|date|time|timestamp)$|[a-z](?:At|Date|Time)$/;
+
+/** Size-named columns are byte counts: `size`, `file_size`, `size_bytes`, `fileSize`. */
+const SIZE_KEY = /(?:^|_)(?:size|bytes)$|[a-z](?:Size|Bytes)$|^filesize$/;
+
+/** Decimal units, as the macOS Finder reports file sizes. */
+function formatBytes(value: unknown): string | undefined {
+  const bytes =
+    typeof value === "number"
+      ? value
+      : typeof value === "string" && /^\d+$/.test(value)
+        ? Number(value)
+        : NaN;
+  if (!Number.isSafeInteger(bytes) || bytes < 0) return undefined;
+  if (bytes < 1000) return `${String(bytes)} B`;
+  const units = ["KB", "MB", "GB", "TB"] as const;
+  let size = bytes / 1000;
+  let unit = 0;
+  while (size >= 1000 && unit < units.length - 1) {
+    size /= 1000;
+    unit++;
+  }
+  return `${unit === 0 ? String(Math.round(size)) : size.toFixed(1)} ${units[unit] ?? "TB"}`;
+}
+
+function cell(key: string, value: unknown): string {
+  const formatted = TIMESTAMP_KEY.test(key)
+    ? formatTimestamp(value)
+    : SIZE_KEY.test(key)
+      ? formatBytes(value)
+      : undefined;
+  if (formatted) return formatted;
   return typeof value === "string" ||
     typeof value === "number" ||
     typeof value === "boolean"
