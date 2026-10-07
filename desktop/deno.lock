@@ -9,7 +9,7 @@
     "jsr:@std/path@1": "1.1.6",
     "jsr:@std/path@^1.1.5": "1.1.6",
     "jsr:@webview/webview@0.9.0": "0.9.0",
-    "npm:@novamira/cli@1.3.2": "1.3.2",
+    "npm:@novamira/cli@1.3.3": "1.3.3",
     "npm:@starfederation/datastar-sdk@1": "1.0.0",
     "npm:commander@14": "14.0.3",
     "npm:skills@1.5.18": "1.5.18"
@@ -54,8 +54,8 @@
     }
   },
   "npm": {
-    "@novamira/cli@1.3.2": {
-      "integrity": "sha512-cn5XK0e9Qp4XJnsZ6C863vGs1exBgJQTHua3yxwEJsjbOi6+s8/8/UT8sOcKqOEGzBncmoIBGY/yz8JeTigflw==",
+    "@novamira/cli@1.3.3": {
+      "integrity": "sha512-hjJk5OlYNYqK8KoW8UEjmgFyJgcAtc4a12NnVHLXm1kPyER1mBC1k5nQMr9mmUQC1RQxj1rm9EF37I6Atg0rzw==",
       "dependencies": [
         "commander"
       ],
@@ -82,7 +82,7 @@
   "workspace": {
     "dependencies": [
       "jsr:@webview/webview@0.9.0",
-      "npm:@novamira/cli@1.3.2",
+      "npm:@novamira/cli@1.3.3",
       "npm:@starfederation/datastar-sdk@1",
       "npm:commander@14",
       "npm:skills@1.5.18"

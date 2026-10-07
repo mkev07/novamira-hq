@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+### Changed
+
+- The bundled Novamira CLI is updated to 1.3.3. When `site-cli auth login`
+  opens the browser it now also prints the authorization URL, so it can be
+  opened in the browser where you are signed in to WordPress, and a login that
+  times out explains how to retry.
+
 ### Fixed
 
 - In Sites, each hosting environment now shows as connected only when its own
