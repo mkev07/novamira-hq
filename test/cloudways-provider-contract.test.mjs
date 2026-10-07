@@ -123,8 +123,8 @@ function clientFor(baseUrl, overrides, http) {
 }
 
 function assertAccessToken(request) {
-  assert.equal(request.headers["x-access-token"], ACCESS_TOKEN);
-  assert.equal(request.headers.authorization, undefined);
+  assert.equal(request.headers.authorization, `Bearer ${ACCESS_TOKEN}`);
+  assert.equal(request.headers["x-access-token"], undefined);
 }
 
 /** Nothing HQ hands back may carry the access token. */

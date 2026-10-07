@@ -4,6 +4,9 @@
 
 ### Fixed
 
+- Cloudways accounts can now be connected. HQ sent the Access Token in a
+  header Cloudways no longer accepts, so every attempt failed with HTTP 400
+  "Check the access token parameter" and the token never showed as used.
 - Backup lists in Hosting tools and the restore backup menu now show when each
   backup was created as a readable date in your computer's time zone, with the
   zone named next to it, instead of a raw provider timestamp. If the time zone
