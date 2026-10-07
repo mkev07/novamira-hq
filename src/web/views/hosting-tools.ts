@@ -9,6 +9,7 @@ import * as ds from "../datastar.js";
 import { copyReport, get, post, signal } from "../expr.js";
 import { renderNotice } from "./layout.js";
 import { asRecord } from "../../json.js";
+import { formatTimestamp } from "../timestamp.js";
 
 export interface HostingToolsView {
   readonly target: HostingToolsTarget;
@@ -87,10 +88,18 @@ function renderRows(value: unknown): Html | false {
     .slice(0, 8);
   if (!keys.length)
     return html`<pre class="code-output">${JSON.stringify(value, null, 2)}</pre>`;
-  return html`<p class="field-help">Showing ${records.length} of ${rows.length} entries. Copy report includes the returned details.</p><div class="hosting-report-table"><table><thead><tr>${keys.map((key) => html`<th>${key.replaceAll("_", " ")}</th>`)}</tr></thead><tbody>${records.map((row) => html`<tr>${keys.map((key) => html`<td>${cell(row[key])}</td>`)}</tr>`)}</tbody></table></div>`;
+  return html`<p class="field-help">Showing ${records.length} of ${rows.length} entries. Copy report includes the returned details.</p><div class="hosting-report-table"><table><thead><tr>${keys.map((key) => html`<th>${key.replaceAll("_", " ")}</th>`)}</tr></thead><tbody>${records.map((row) => html`<tr>${keys.map((key) => html`<td>${cell(key, row[key])}</td>`)}</tr>`)}</tbody></table></div>`;
 }
 
-function cell(value: unknown): string {
+/** Timestamp-named columns read as dates; the copied report keeps raw values. */
+const TIMESTAMP_KEY =
+  /(?:^|_)(?:at|date|time|timestamp)$|[a-z](?:At|Date|Time)$/;
+
+function cell(key: string, value: unknown): string {
+  const timestamp = TIMESTAMP_KEY.test(key)
+    ? formatTimestamp(value)
+    : undefined;
+  if (timestamp) return timestamp;
   return typeof value === "string" ||
     typeof value === "number" ||
     typeof value === "boolean"

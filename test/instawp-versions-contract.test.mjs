@@ -14,6 +14,9 @@ import { renderBackupCreate } from "../dist/web/views/backup-create.js";
 import { renderHtml } from "../dist/web/html.js";
 import { backupChoices } from "../dist/web/services/restore.js";
 
+// Dates render in the computer's time zone; pin it so labels are stable.
+process.env.TZ = "UTC";
+
 const row = (extra = {}) => ({
   id: 12,
   site_id: 42,
