@@ -271,7 +271,7 @@ test("backup report shows provider timestamps as readable UTC dates", () => {
   assert.match(markup, /<td>07 Oct 2026, 08:05 UTC<\/td>/);
   assert.match(markup, /<td>02 Oct 2026, 12:43 UTC<\/td>/);
   assert.match(markup, /<td>21 Sept 2026, 14:13 UTC<\/td>/);
-  assert.match(markup, /<td>42<\/td>/);
+  assert.match(markup, /<td>42 B<\/td>/);
   assert.match(markup, /&quot;created_at&quot;: 1791360300000/);
 });
 
@@ -298,4 +298,28 @@ test("backup dates use the local time zone and always name it", () => {
     process.env.TZ = "UTC";
   }
   assert.match(render(), /<td>02 Oct 2026, 12:43 UTC<\/td>/);
+});
+
+test("backup report shows byte sizes in readable units", () => {
+  const markup = renderHtml(
+    renderHostingTools({
+      target: { profile: "a", site: "s", env: "e" },
+      provider: "xcloud",
+      selected: "backups",
+      result: {
+        data: {
+          backups: [
+            { uuid: "a", file_name: "site.tar.gz", file_size: 683328 },
+            { uuid: "b", file_name: "db.sql", file_size: "172053" },
+            { uuid: "c", file_name: "big.tar.gz", file_size: 2_457_600_000 },
+            { uuid: "d", file_name: "tiny", file_size: 512 },
+            { uuid: "e", file_name: "odd", file_size: "unknown" },
+          ],
+        },
+      },
+    }),
+  );
+  for (const label of ["683 KB", "172 KB", "2.5 GB", "512 B", "unknown"])
+    assert.match(markup, new RegExp(`<td>${label}</td>`));
+  assert.match(markup, /&quot;file_size&quot;: 683328/);
 });

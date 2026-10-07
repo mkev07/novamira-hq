@@ -955,7 +955,8 @@ select:focus {
 .hosting-tools .page-head p { overflow-wrap: anywhere; }
 .hosting-report-table { max-width: 100%; overflow-x: auto; margin-bottom: 20px; }
 .hosting-report-table table { width: 100%; border-collapse: collapse; font-size: 14px; }
-.hosting-report-table th, .hosting-report-table td { padding: 10px; text-align: left; border-bottom: 1px solid var(--border); overflow-wrap: anywhere; max-width: 320px; }
+.hosting-report-table th, .hosting-report-table td { padding: 10px; text-align: left; border-bottom: 1px solid var(--border); vertical-align: top; }
+.hosting-report-table td { white-space: normal; overflow-wrap: break-word; }
 .hosting-tools .code-output { max-height: 480px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
 
 .loading-inline {

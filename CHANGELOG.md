@@ -8,6 +8,9 @@
   backup was created as a readable date in your computer's time zone, with the
   zone named next to it, instead of a raw provider timestamp. If the time zone
   cannot be determined, dates are shown in UTC.
+- Hosting tools reports now show file sizes in readable units, such as 683 KB,
+  instead of raw byte counts, and long values such as backup file names wrap
+  inside their column instead of overlapping the next one.
 
 ## 1.0.0-beta3 - 2026-10-01
 
