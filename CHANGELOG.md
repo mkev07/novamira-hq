@@ -4,6 +4,12 @@
 
 ### Fixed
 
+- In Sites, each hosting environment now shows as connected only when its own
+  address has a WordPress connection. Before, a Plesk subdomain could borrow
+  its parent domain's connection, and a Kinsta or WP Engine environment could
+  borrow another environment's, so Install Novamira Pro and Disconnect acted on
+  the wrong site. An environment connected under an address other than its own
+  now shows as not connected until it is connected with its own address.
 - On Linux, HQ now detects an installed `secret-tool`, so hosting credentials
   and the Pro licence key save to the Secret Service instead of HQ reporting
   that the OS credential service is unavailable.

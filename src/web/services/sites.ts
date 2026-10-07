@@ -385,10 +385,17 @@ export function createSitesService(options: SitesServiceOptions): SitesService {
           const key = connectionKey(group.profile, site.id, env.id);
           queries.push({
             key,
-            // Most specific first. They are heterogeneous by provider — a bare
-            // hostname or a full URL — and `src/integration/origin.ts`
+            // Only the environment's own address identifies its WordPress
+            // install. The site address is a container (Plesk) or another
+            // environment's domain (Kinsta, WP Engine), so it is a fallback
+            // for an environment without one, never a second match. Values are
+            // a bare hostname or a full URL; `src/integration/origin.ts`
             // normalizes them, so nothing here parses a URL.
-            origins: [env.primaryDomain, site.primaryDomain].filter(nonEmpty),
+            origins: [
+              nonEmpty(env.primaryDomain)
+                ? env.primaryDomain
+                : site.primaryDomain,
+            ].filter(nonEmpty),
           });
         }
       }
