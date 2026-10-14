@@ -218,9 +218,9 @@ for (const provider of PROVIDER_KINDS) {
     await withClient(
       provider,
       async (client) => {
-        // Plesk's initial surface is account validation and domain inventory;
-        // it deliberately exposes no generic read or mutating action.
-        if (provider === "plesk")
+        // Plesk's, cPanel's and WHM's initial surface is account validation
+        // and domain inventory; none exposes a generic read or mutating action.
+        if (provider === "plesk" || provider === "cpanel" || provider === "whm")
           await sweep(provider, "validate", "domains", () => client.validate());
         for (const kind of READ_REQUEST_KINDS) {
           await sweep(provider, "read", kind, () =>
@@ -320,10 +320,21 @@ async function withClient(provider, body, seen = []) {
       provider,
       credential: envCredential(defaultCredentialEnv(provider)),
       // Doubles as the identity half for the providers that require one.
-      companyId: provider === "xcloud" ? XCLOUD_TEAM : IDENTITY,
+      companyId:
+        provider === "xcloud"
+          ? XCLOUD_TEAM
+          : provider === "cpanel"
+            ? "conformance"
+            : provider === "whm"
+              ? "root"
+              : IDENTITY,
       ...(provider === "plesk"
         ? { apiBaseUrl: "https://plesk.example.invalid:8443" }
-        : {}),
+        : provider === "cpanel"
+          ? { apiBaseUrl: "https://cpanel.example.invalid:2083" }
+          : provider === "whm"
+            ? { apiBaseUrl: "https://whm.example.invalid:2087" }
+            : {}),
     });
 
     const factory = createHostingClientFactory({

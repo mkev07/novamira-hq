@@ -103,8 +103,8 @@ import {
 /* -------------------------------------------------------------------------- */
 
 /**
- * Go's `providerMetaExpression` table (`views.go:326-381`), extended for Plesk
- * and xCloud.
+ * Go's `providerMetaExpression` table (`views.go:326-381`), extended for Plesk,
+ * xCloud and cPanel.
  * The original eight
  * providers by four fields.
  *
@@ -185,6 +185,21 @@ const PROVIDER_FORM_META: JsonValue = {
     credentialHelp:
       "Paste an xCloud API token. Create it under Account → API Tokens with the read:servers, read:sites and write:sites scopes.",
   },
+  cpanel: {
+    companyLabel: "cPanel username",
+    companyPlaceholder: "cpaneluser",
+    companyHelp:
+      "Required. The cPanel account username that owns the API token.",
+    credentialHelp:
+      "Paste a cPanel API token. Create one in cPanel → Security → Manage API Tokens. A token without restrictions can manage the whole account; create one only for Novamira HQ so you can revoke it there.",
+  },
+  whm: {
+    companyLabel: "WHM user",
+    companyPlaceholder: "root",
+    companyHelp: "root, or your reseller user name. Leave blank to use root.",
+    credentialHelp:
+      "Paste a WHM API token created by that user in WHM → Development → Manage API Tokens. A root token controls the whole server, a reseller token the accounts that reseller owns; create one only for Novamira HQ so you can revoke it there.",
+  },
 };
 
 /** What the four fields say for a provider the table does not describe. */
@@ -193,6 +208,35 @@ const PROVIDER_FORM_META_FALLBACK: Readonly<Record<string, string>> = {
   companyPlaceholder: "Optional",
   companyHelp: "Optional provider account identifier.",
   credentialHelp: "Paste the provider credential.",
+};
+
+/**
+ * The panel URL field's placeholder and help, which the two control-panel
+ * providers word differently: Plesk's help speaks of WP Toolkit, cPanel's of the
+ * address the operator signs in to. The field is hidden for every other
+ * provider, so the fallback only has to be neutral.
+ */
+const PANEL_URL_META: JsonValue = {
+  plesk: {
+    panelUrlPlaceholder: "https://panel.example.com:8443",
+    panelUrlHelp:
+      "Enter the HTTPS panel URL. With WP Toolkit, Novamira HQ can set up Novamira and create or restore WordPress backups. Without it, Novamira HQ lists hosted domains.",
+  },
+  cpanel: {
+    panelUrlPlaceholder: "https://server.example.com:2083",
+    panelUrlHelp:
+      "Use the address you sign in to cPanel with, such as https://server.example.com:2083 or https://cpanel.example.com.",
+  },
+  whm: {
+    panelUrlPlaceholder: "https://server.example.com:2087",
+    panelUrlHelp:
+      "Use the address you sign in to WHM with, such as https://server.example.com:2087.",
+  },
+};
+
+const PANEL_URL_META_FALLBACK: Readonly<Record<string, string>> = {
+  panelUrlPlaceholder: "https://panel.example.com",
+  panelUrlHelp: "Enter the HTTPS panel URL.",
 };
 
 const PROVIDER_LABEL_META: JsonValue = Object.fromEntries(
@@ -209,6 +253,16 @@ function meta(field: keyof typeof PROVIDER_FORM_META_FALLBACK): Expr {
     "providerForm.provider",
     field,
     PROVIDER_FORM_META_FALLBACK[field] ?? "",
+  );
+}
+
+/** The same lookup as {@link meta}, over the panel URL field's own table. */
+function panelUrlMeta(field: keyof typeof PANEL_URL_META_FALLBACK): Expr {
+  return lookupOr(
+    PANEL_URL_META,
+    "providerForm.provider",
+    field,
+    PANEL_URL_META_FALLBACK[field] ?? "",
   );
 }
 
@@ -471,7 +525,7 @@ export function renderProviderForm(open: boolean): Html {
     placeholder: meta("companyPlaceholder"),
   })}><small class="field-help"${ds.text(
     meta("companyHelp"),
-  )}></small></label><label${ds.classes({ hidden: not(equal(signal("providerForm.provider"), jsString("plesk"))) })}><span>Plesk panel URL</span><input type="url"${ds.bind("providerForm.apiBaseUrl")} placeholder="https://panel.example.com:8443"><small class="field-help">Enter the HTTPS panel URL. With WP Toolkit, Novamira HQ can set up Novamira and create or restore WordPress backups. Without it, Novamira HQ lists hosted domains.</small></label></div><div class="button-row"><button class="button primary" type="submit"${ds.attrs({ disabled: signal(saving) })}><span${ds.classes({ hidden: signal(saving) })}>Save and connect</span><span class="loading-inline ds-toggle"${ds.classes({ open: signal(saving) })}>Connecting…</span></button><button class="button secondary" type="button"${ds.on(
+  )}></small></label><label${ds.classes({ hidden: not(or(equal(signal("providerForm.provider"), jsString("plesk")), equal(signal("providerForm.provider"), jsString("cpanel")), equal(signal("providerForm.provider"), jsString("whm")))) })}><span>Panel URL</span><input type="url"${ds.bind("providerForm.apiBaseUrl")}${ds.attrs({ placeholder: panelUrlMeta("panelUrlPlaceholder") })}><small class="field-help"${ds.text(panelUrlMeta("panelUrlHelp"))}></small></label></div><div class="button-row"><button class="button primary" type="submit"${ds.attrs({ disabled: signal(saving) })}><span${ds.classes({ hidden: signal(saving) })}>Save and connect</span><span class="loading-inline ds-toggle"${ds.classes({ open: signal(saving) })}>Connecting…</span></button><button class="button secondary" type="button"${ds.on(
     "click",
     resetProviderForm(false),
   )}>Cancel</button></div></section></form>`;

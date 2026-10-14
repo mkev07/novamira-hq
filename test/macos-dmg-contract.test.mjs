@@ -51,3 +51,34 @@ test("DMG is assembled after app stapling and separately signed, notarized and s
     );
   }
 });
+test("Apple ticket checks and hdiutil steps are retried before a release fails", async () => {
+  const signer = await source("scripts/macos-sign.sh");
+  for (const step of [
+    'retry xcrun stapler staple "$app"',
+    'retry xcrun stapler validate "$app"',
+    'retry xcrun stapler staple "$helper"',
+    'retry xcrun stapler validate "$helper"',
+    'retry spctl --assess --type execute -vv "$app"',
+    'retry xcrun stapler staple "$binary.dmg"',
+    'retry xcrun stapler validate "$binary.dmg"',
+    "retry spctl --assess --type open",
+  ])
+    assert.ok(signer.includes(step), step);
+  // A notarization submission is not retried: a repeat would be a new one.
+  assert.doesNotMatch(signer, /retry notary submit/);
+  const dmg = await source("scripts/macos-dmg.sh");
+  for (const step of [
+    "retry create_image",
+    "retry hdiutil attach",
+    'retry hdiutil detach -quiet "$work/mount"',
+    "retry convert_image",
+    'retry hdiutil verify "$output"',
+  ])
+    assert.ok(dmg.includes(step), step);
+  assert.match(dmg, /create_image\(\) \{\n  rm -f "\$work\/writable\.dmg"/);
+  assert.match(
+    dmg,
+    /\|\|\n  \{ sync; hdiutil detach -quiet -force "\$work\/mount"; \}/,
+  );
+  assert.match(dmg, /convert_image\(\) \{\n  rm -f "\$output"/);
+});

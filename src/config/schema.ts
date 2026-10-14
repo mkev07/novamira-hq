@@ -22,6 +22,8 @@ export const PROVIDER_KINDS = [
   "cloudways",
   "plesk",
   "xcloud",
+  "cpanel",
+  "whm",
 ] as const;
 
 export type ProviderKind = (typeof PROVIDER_KINDS)[number];
@@ -65,6 +67,16 @@ export const DEFAULT_PLESK_API_BASE_URL = "https://plesk.invalid:8443";
 export const DEFAULT_PLESK_CREDENTIAL_ENV = "PLESK_API_KEY";
 export const DEFAULT_XCLOUD_API_BASE_URL = "https://app.xcloud.host/api/v1";
 export const DEFAULT_XCLOUD_CREDENTIAL_ENV = "XCLOUD_API_TOKEN";
+// cPanel is self-hosted. This placeholder is never contacted: a profile must
+// provide its own panel URL and username before the adapter makes a request.
+export const DEFAULT_CPANEL_API_BASE_URL = "https://cpanel.invalid:2083";
+export const DEFAULT_CPANEL_CREDENTIAL_ENV = "CPANEL_API_TOKEN";
+export const DEFAULT_CPANEL_USERNAME_ENV = "CPANEL_USERNAME";
+// WHM is self-hosted. This placeholder is never contacted: a profile must
+// provide its own WHM URL before the adapter makes a request.
+export const DEFAULT_WHM_API_BASE_URL = "https://whm.invalid:2087";
+export const DEFAULT_WHM_CREDENTIAL_ENV = "WHM_API_TOKEN";
+export const DEFAULT_WHM_USERNAME_ENV = "WHM_USERNAME";
 
 export interface ProviderDefaults {
   readonly apiBaseUrl: string;
@@ -125,6 +137,16 @@ export const PROVIDER_DEFAULTS: Readonly<
   xcloud: {
     apiBaseUrl: DEFAULT_XCLOUD_API_BASE_URL,
     credentialEnv: DEFAULT_XCLOUD_CREDENTIAL_ENV,
+  },
+  cpanel: {
+    apiBaseUrl: DEFAULT_CPANEL_API_BASE_URL,
+    credentialEnv: DEFAULT_CPANEL_CREDENTIAL_ENV,
+    identityEnv: DEFAULT_CPANEL_USERNAME_ENV,
+  },
+  whm: {
+    apiBaseUrl: DEFAULT_WHM_API_BASE_URL,
+    credentialEnv: DEFAULT_WHM_CREDENTIAL_ENV,
+    identityEnv: DEFAULT_WHM_USERNAME_ENV,
   },
 };
 

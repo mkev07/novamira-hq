@@ -81,6 +81,11 @@ export interface ProviderMutation {
    * never an error, because the configuration change succeeded.
    */
   readonly warning?: string;
+  /**
+   * True when the provider accepted the credential before it was saved (WHM
+   * today): the save itself is the access check, so none follows it.
+   */
+  readonly verified?: boolean;
 }
 
 export interface ProviderService {
@@ -162,6 +167,7 @@ export function createProviderService(
       async (): Promise<{
         readonly previousStoredId: string | undefined;
         readonly nextStoredId: string | undefined;
+        readonly verified: boolean;
       }> => {
         const existing = await options.store.getHostingProfile(name);
         if (existing !== undefined && !input.force) {
@@ -204,12 +210,32 @@ export function createProviderService(
         // — is preserved by the `existing.apiBaseUrl` fallback.
         const apiBaseUrl =
           input.apiBaseUrl !== "" ? input.apiBaseUrl : existing?.apiBaseUrl;
-        if (provider === "plesk" && !apiBaseUrl)
+        // An empty WHM user means root; a reseller enters its own user name.
+        const companyId =
+          input.companyId !== ""
+            ? input.companyId
+            : provider === "whm"
+              ? "root"
+              : undefined;
+        if (
+          (provider === "plesk" ||
+            provider === "cpanel" ||
+            provider === "whm") &&
+          !apiBaseUrl
+        )
           throw new CliError(
             "usage_error",
-            "Enter the HTTPS Plesk panel URL before connecting.",
+            provider === "plesk"
+              ? "Enter the HTTPS Plesk panel URL before connecting."
+              : provider === "cpanel"
+                ? "Enter the HTTPS cPanel address before connecting."
+                : "Enter the HTTPS WHM address before connecting.",
           );
-        const companyId = input.companyId !== "" ? input.companyId : undefined;
+        if (provider === "cpanel" && companyId === undefined)
+          throw new CliError(
+            "usage_error",
+            "Enter the cPanel username before connecting.",
+          );
 
         const profile: HostingProfile = {
           provider,
@@ -223,7 +249,18 @@ export function createProviderService(
         const previousStoredId = storedIdOf(existing?.credential);
         const nextStoredId = storedIdOf(credential);
 
+        // A WHM token reaches every account it may list: it is checked before
+        // it is saved, so a mistyped or revoked token is never stored.
+        // Other providers keep save-then-verify in the handler.
+        const validateFirst = provider === "whm";
         const saveConfig = async (): Promise<void> => {
+          if (validateFirst) {
+            const client = await options.hosting.clientFromEntry({
+              name,
+              profile,
+            });
+            await client.validate();
+          }
           await options.store.upsertHostingProfileWithProfileLockHeld(
             name,
             profile,
@@ -241,13 +278,14 @@ export function createProviderService(
           await withCredentialTransaction(
             await options.credentials(),
             async (transaction) => {
-              // Secret first, config last: a failed save rolls the write back.
+              // Secret first (the validation reads it), config last: a failed
+              // validation or save rolls the write back.
               await transaction.replace(id, value);
               await saveConfig();
             },
           );
         }
-        return { previousStoredId, nextStoredId };
+        return { previousStoredId, nextStoredId, verified: validateFirst };
       },
     );
 
@@ -260,9 +298,13 @@ export function createProviderService(
       outcome.previousStoredId !== outcome.nextStoredId &&
       !(await forgetSecret(outcome.previousStoredId))
     ) {
-      return { name, warning: ORPHANED_SECRET_WARNING };
+      return {
+        name,
+        warning: ORPHANED_SECRET_WARNING,
+        ...(outcome.verified ? { verified: true } : {}),
+      };
     }
-    return { name };
+    return { name, ...(outcome.verified ? { verified: true } : {}) };
   };
 
   const remove = async (name: string): Promise<ProviderMutation> => {

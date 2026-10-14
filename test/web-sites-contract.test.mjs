@@ -138,7 +138,71 @@ const CONFIG = {
 const ENVIRONMENT = {
   KINSTA_API_KEY: "kinsta-fake",
   PANTHEON_MACHINE_TOKEN: "pantheon-fake",
+  CPANEL_API_TOKEN: "cpanel-fake-not-a-real-secret",
+  WHM_API_TOKEN: "whm-fake-not-a-real-secret",
 };
+
+/** cPanel: a site is a domain and its single environment is `domain:<domain>`. */
+const CPANEL_CONFIG = {
+  version: 1,
+  hostingProfiles: {
+    cp: {
+      provider: "cpanel",
+      credential: { type: "env", name: "CPANEL_API_TOKEN" },
+      apiBaseUrl: "https://cpanel.example.test:2083/",
+      companyId: "wptest",
+    },
+  },
+  pushes: {},
+};
+
+const CPANEL_SITES = [
+  {
+    id: "wp.example.test",
+    name: "wp.example.test",
+    displayName: "wp.example.test",
+    status: "live",
+    primaryDomain: "wp.example.test",
+    environments: [
+      env("domain:wp.example.test", {
+        name: "wp.example.test",
+        displayName: "wp.example.test",
+        primaryDomain: "wp.example.test",
+      }),
+    ],
+  },
+];
+
+/** WHM: a site is `<account>:<domain>`, which is also its single environment id. */
+const WHM_CONFIG = {
+  version: 1,
+  hostingProfiles: {
+    srv: {
+      provider: "whm",
+      credential: { type: "env", name: "WHM_API_TOKEN" },
+      apiBaseUrl: "https://whm.example.test:2087/",
+      companyId: "root",
+    },
+  },
+  pushes: {},
+};
+
+const WHM_SITES = [
+  {
+    id: "wptest:wp.example.test",
+    name: "wp.example.test",
+    displayName: "wp.example.test (wptest)",
+    status: "live",
+    primaryDomain: "wp.example.test",
+    environments: [
+      env("wptest:wp.example.test", {
+        name: "live",
+        displayName: "wp.example.test",
+        primaryDomain: "wp.example.test",
+      }),
+    ],
+  },
+];
 
 /* -------------------------------------------------------------------------- */
 /* Fixture                                                                    */
@@ -249,6 +313,8 @@ async function fixture(options = {}) {
       kinsta: () => client("kinsta", options.kinstaSites ?? KINSTA_SITES),
       pantheon: () =>
         client("pantheon", options.pantheonSites ?? PANTHEON_SITES),
+      cpanel: () => client("cpanel", options.cpanelSites ?? CPANEL_SITES),
+      whm: () => client("whm", options.whmSites ?? WHM_SITES),
     },
     env: environment,
   });
@@ -933,6 +999,72 @@ test("10: supported hosting rows have one connect action with inspection context
   assert.ok(!markup.includes("Install / check Novamira"));
   assert.ok(!markup.includes("Fix set up"));
   assert.ok(!markup.includes("connected-directly"));
+});
+
+test("a cPanel site offers Connect with its hosting target for Setup, Create backup, and no Restore", async () => {
+  const { markup, listCalls } = await resultMarkup({
+    config: CPANEL_CONFIG,
+    states: { "domain:wp.example.test": "not_configured" },
+  });
+  assert.deepEqual(
+    listCalls.map(({ provider }) => provider),
+    ["cpanel"],
+  );
+  // Setup is reached through Connect: the hosting profile and the cPanel
+  // environment id travel with it, exactly as for the other setup providers.
+  const connect =
+    /<button[^>]*title="Check Novamira, then authorize[^>]*>/.exec(markup);
+  assert.ok(connect, "the Connect button");
+  const target = decodeURIComponent(connect[0]);
+  assert.ok(target.includes("hosting_profile=cp"), target);
+  assert.ok(target.includes("env=domain:wp.example.test"), target);
+  assert.ok(target.includes("url=https://wp.example.test"), target);
+  assert.doesNotMatch(connect[0], / disabled[ >]/);
+
+  const actions = [
+    ...markup.matchAll(/class="profile-menu-action" href="([^"]*)"/g),
+  ].map((match) => match[1]);
+  const backup = actions.find((href) => href.startsWith("/backup-create?"));
+  assert.ok(backup, "Create backup is in the site menu");
+  assert.ok(backup.includes("profile=cp"));
+  assert.ok(backup.includes("site=wp.example.test"));
+  assert.ok(backup.includes("env=domain%3Awp.example.test"));
+  assert.equal(markup.split(">Create backup…</a>").length - 1, 1);
+  assert.ok(actions.some((href) => href.startsWith("/hosting-tools?")));
+  // cPanel's user API cannot restore a backup.
+  assert.ok(!markup.includes(">Restore backup…</a>"));
+  assert.ok(!actions.some((href) => href.startsWith("/backup-restore")));
+});
+
+test("a WHM site offers Connect with its hosting target for Setup, Create backup, and no Restore", async () => {
+  const { markup, listCalls } = await resultMarkup({
+    config: WHM_CONFIG,
+    states: { "wptest:wp.example.test": "not_configured" },
+  });
+  assert.deepEqual(
+    listCalls.map(({ provider }) => provider),
+    ["whm"],
+  );
+  // Setup is reached through Connect with the WHM environment id.
+  const connect =
+    /<button[^>]*title="Check Novamira, then authorize[^>]*>/.exec(markup);
+  assert.ok(connect, "the Connect button");
+  const target = decodeURIComponent(connect[0]);
+  assert.ok(target.includes("hosting_profile=srv"), target);
+  assert.ok(target.includes("env=wptest:wp.example.test"), target);
+  assert.doesNotMatch(connect[0], / disabled[ >]/);
+  const actions = [
+    ...markup.matchAll(/class="profile-menu-action" href="([^"]*)"/g),
+  ].map((match) => match[1]);
+  const backup = actions.find((href) => href.startsWith("/backup-create?"));
+  assert.ok(backup, "Create backup is in the site menu");
+  assert.ok(backup.includes("profile=srv"));
+  assert.ok(backup.includes("env=wptest%3Awp.example.test"));
+  assert.equal(markup.split(">Create backup…</a>").length - 1, 1);
+  assert.ok(actions.some((href) => href.startsWith("/hosting-tools?")));
+  // WHM, like cPanel, has no restore API.
+  assert.ok(!markup.includes(">Restore backup…</a>"));
+  assert.ok(!actions.some((href) => href.startsWith("/backup-restore")));
 });
 
 /* -------------------------------------------------------------------------- */

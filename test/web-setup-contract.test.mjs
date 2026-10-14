@@ -27,6 +27,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
+import { CliError } from "../dist/errors.js";
 import { renderHtml } from "../dist/web/html.js";
 import {
   renderSetupWorkBody,
@@ -318,6 +319,8 @@ async function fixture(options = {}) {
   const environment = {
     NOVAMIRA_HQ_HOME: home,
     KINSTA_API_KEY: "kinsta-fake-not-a-real-secret",
+    CPANEL_API_TOKEN: "cpanel-fake-not-a-real-secret",
+    WHM_API_TOKEN: "whm-fake-not-a-real-secret",
   };
   const paths = platformPaths(environment, process.platform, home);
   const security = defaultFileSecurity();
@@ -345,7 +348,15 @@ async function fixture(options = {}) {
   });
   const hosting = createHostingClientFactory({
     store,
-    registry: { kinsta: () => client },
+    registry: {
+      kinsta: () => client,
+      ...(options.cpanelClient === undefined
+        ? {}
+        : { cpanel: () => options.cpanelClient }),
+      ...(options.whmClient === undefined
+        ? {}
+        : { whm: () => options.whmClient }),
+    },
     env: environment,
   });
 
@@ -1016,4 +1027,185 @@ test("10: both routes refuse a missing or wrong token", async () => {
       assert.equal(response.envelope.error.code, "usage_error");
     }
   }
+});
+
+/* -------------------------------------------------------------------------- */
+/* cPanel without WP Toolkit: the temporary installer approval                */
+/* -------------------------------------------------------------------------- */
+
+const INSTALLER_LABEL =
+  "If this account has no WP Toolkit, I approve uploading Novamira and a temporary installer that removes itself after one run";
+
+test("the temporary installer approval is offered only for a cPanel target and does not gate Start Setup", async () => {
+  const { server } = await fixture({
+    hostingProfiles: {
+      ...PROFILES,
+      panel: {
+        provider: "cpanel",
+        credential: { type: "env", name: "CPANEL_API_TOKEN" },
+        apiBaseUrl: "https://cpanel.example.test:2083/",
+        companyId: "wptest",
+      },
+    },
+  });
+  const cpanel = await page(
+    server,
+    "/novamira-setup?profile=panel&env=domain:wp.example.test",
+  );
+  assert.ok(cpanel.includes('data-bind="setup.allowTemporaryInstaller"'));
+  assert.ok(cpanel.includes(INSTALLER_LABEL));
+  assert.ok(
+    cpanel.includes(
+      "With WP Toolkit this is not used. The installer runs once when WordPress loads, never reads visitor requests, and is deleted afterwards.",
+    ),
+  );
+  assert.ok(!/disabled[^>]*allowTemporaryInstaller/.test(cpanel));
+  const kinsta = await page(server, "/novamira-setup?profile=dev&env=env-1");
+  assert.ok(!kinsta.includes("setup.allowTemporaryInstaller"));
+  assert.ok(!kinsta.includes(INSTALLER_LABEL));
+});
+
+test("the setup job carries the temporary installer approval only when it was given", async () => {
+  const requests = [];
+  let sequence = 0;
+  const service = createSetupJobService({
+    hosting: { clientFromProfile: async () => ({ provider: "cpanel" }) },
+    environment: {},
+    fetch: fakeFetch(),
+    now: () => START,
+    randomId: () => String(sequence++).padStart(32, "0"),
+    provision: async (dependencies, request) => {
+      requests.push(request);
+      throw new Error("stop");
+    },
+  });
+  await service.start({
+    profile: "panel",
+    envId: "domain:a.example.test",
+    aiAbilities: true,
+    temporaryInstaller: true,
+  });
+  await service.start({
+    profile: "panel",
+    envId: "domain:b.example.test",
+    aiAbilities: true,
+  });
+  await service.shutdown();
+  assert.deepEqual(requests, [
+    {
+      envId: "domain:a.example.test",
+      aiAbilities: true,
+      temporaryInstaller: true,
+    },
+    { envId: "domain:b.example.test", aiAbilities: true },
+  ]);
+});
+
+const PANEL_PROFILES = {
+  ...PROFILES,
+  panel: {
+    provider: "cpanel",
+    credential: { type: "env", name: "CPANEL_API_TOKEN" },
+    apiBaseUrl: "https://cpanel.example.test:2083/",
+    companyId: "wptest",
+  },
+};
+
+/** A cPanel or WHM client double that records the setup request and stops there. */
+function recordingCpanelClient(provider = "cpanel") {
+  const requests = [];
+  return {
+    requests,
+    provider,
+    async action(request) {
+      requests.push(request);
+      throw new CliError("provider_error", "recorded");
+    },
+  };
+}
+
+test("the start route passes the temporary installer approval to a cPanel target only when ticked", async () => {
+  for (const ticked of [true, false]) {
+    const cpanelClient = recordingCpanelClient();
+    const { server } = await fixture({
+      setupPollMs: 1,
+      hostingProfiles: PANEL_PROFILES,
+      cpanelClient,
+    });
+    const started = await sse(
+      server,
+      startRequest("profile=panel&env=domain:wp.example.test", {
+        setup: { enableAiAbilities: true, allowTemporaryInstaller: ticked },
+      }),
+    );
+    await drain(server, jobIdFrom(started.recorder));
+    assert.equal(cpanelClient.requests.length, 1);
+    assert.equal(
+      Object.hasOwn(cpanelClient.requests[0], "allowTemporaryInstaller"),
+      ticked,
+    );
+    if (ticked)
+      assert.equal(cpanelClient.requests[0].allowTemporaryInstaller, true);
+  }
+});
+
+const WHM_PROFILES = {
+  ...PROFILES,
+  server: {
+    provider: "whm",
+    credential: { type: "env", name: "WHM_API_TOKEN" },
+    apiBaseUrl: "https://whm.example.test:2087/",
+    companyId: "root",
+  },
+};
+
+test("the temporary installer approval is offered for a WHM target as well", async () => {
+  const { server } = await fixture({ hostingProfiles: WHM_PROFILES });
+  const whm = await page(
+    server,
+    "/novamira-setup?profile=server&env=wptest:wp.example.test",
+  );
+  assert.ok(whm.includes('data-bind="setup.allowTemporaryInstaller"'));
+  assert.ok(whm.includes(INSTALLER_LABEL));
+  assert.ok(!/disabled[^>]*allowTemporaryInstaller/.test(whm));
+});
+
+test("the start route passes the temporary installer approval to a WHM target only when ticked", async () => {
+  for (const ticked of [true, false]) {
+    const whmClient = recordingCpanelClient("whm");
+    const { server } = await fixture({
+      setupPollMs: 1,
+      hostingProfiles: WHM_PROFILES,
+      whmClient,
+    });
+    const started = await sse(
+      server,
+      startRequest("profile=server&env=wptest:wp.example.test", {
+        setup: { enableAiAbilities: true, allowTemporaryInstaller: ticked },
+      }),
+    );
+    await drain(server, jobIdFrom(started.recorder));
+    assert.equal(whmClient.requests.length, 1);
+    assert.equal(
+      Object.hasOwn(whmClient.requests[0], "allowTemporaryInstaller"),
+      ticked,
+    );
+    if (ticked)
+      assert.equal(whmClient.requests[0].allowTemporaryInstaller, true);
+  }
+});
+
+test("a stale ticked temporary installer approval never reaches another provider's setup", async () => {
+  const { server, client } = await fixture({ setupPollMs: 1 });
+  const started = await sse(
+    server,
+    startRequest("profile=dev&env=env-1", {
+      setup: { enableAiAbilities: true, allowTemporaryInstaller: true },
+    }),
+  );
+  const id = jobIdFrom(started.recorder);
+  await drain(server, id);
+  assert.ok(client.commands.includes(PHP_VERSION_COMMAND));
+  const markup = await page(server, `/novamira-setup?job=${id}`);
+  assert.ok(!markup.includes("applies only to cPanel accounts"));
 });

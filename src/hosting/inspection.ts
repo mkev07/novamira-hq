@@ -7,6 +7,7 @@ import { asRecord } from "../json.js";
 import { redact } from "../output/redact.js";
 import { applyHqCapabilityPolicy } from "./capabilities.js";
 import type { ProviderClient, ReadRequest } from "./client.js";
+import { cpanelFamily } from "./types.js";
 import { sendGuardedAction } from "./verified-action.js";
 
 export interface HostingInspectionOption {
@@ -78,6 +79,8 @@ export function hostingInspectionOptions(
     add("logs:access", "Access log", "logs.get", "Logs");
     add("activity", "Site events", "activity.list", "Provider activity");
   }
+  if (cpanelFamily(provider))
+    add("logs:error", "Error log", "logs.get", "Logs");
   if (provider === "kinsta") {
     for (const metric of ["visits", "bandwidth", "cdn-bandwidth"])
       add(
@@ -130,6 +133,8 @@ export function hostingInspectionOptions(
       "wpengine",
       "instawp",
       "xcloud",
+      "cpanel",
+      "whm",
     ].includes(provider)
   )
     add(
@@ -330,9 +335,11 @@ export async function inspectHosting(
               ? "Access logs for the last hour."
               : client.provider === "xcloud"
                 ? "Latest access log entries, read from the server over SSH."
-                : client.provider === "pressable"
-                  ? "The provider does not support a line limit."
-                  : "Requested tail of the selected log.",
+                : cpanelFamily(client.provider)
+                  ? "Latest entries of the domain's error log."
+                  : client.provider === "pressable"
+                    ? "The provider does not support a line limit."
+                    : "Requested tail of the selected log.",
         }
       : {}),
     truncated,

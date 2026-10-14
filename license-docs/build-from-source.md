@@ -26,7 +26,7 @@ The current reference chain is:
 | Component | Source reference                                                             |
 | --------- | ---------------------------------------------------------------------------- |
 | HQ        | https://github.com/use-novamira/novamira-hq — matching release tag/commit    |
-| Site CLI  | https://github.com/use-novamira/novamira-cli/tree/v1.3.3                     |
+| Site CLI  | https://github.com/use-novamira/novamira-cli/tree/v1.3.4                     |
 | Deno      | https://github.com/denoland/deno/tree/v2.9.6                                 |
 | Rusty V8  | https://github.com/denoland/rusty_v8/tree/v150.4.0                           |
 | V8        | https://github.com/denoland/v8/tree/ac1e23989121713ca642f6650b34deff7b686896 |
@@ -75,6 +75,11 @@ executable and is not part of release archives. Run `node scripts/desktop-smoke.
 to exercise compiled offline site features and process cleanup.
 This normally uses a **precompiled** Deno runtime. It rebuilds HQ, but does not
 recompile the LGPL component. The following steps are needed to modify that code.
+
+On Windows, `node scripts/desktop-build.mjs --package` also builds the
+installer `dist-desktop/novamira-hq-setup-windows-x86_64.exe` with NSIS 3.13,
+downloaded from SourceForge and verified against the checksum in
+`scripts/windows-nsis.mjs`.
 
 ## Rebuild the runtime with modified library source
 

@@ -19,18 +19,42 @@ cleanup() {
   rm -rf "$work"
 }
 trap cleanup EXIT
+# hdiutil on hosted runners fails now and then with "Resource busy" (status
+# 16). Every image step below starts from a clean target, so it is repeated
+# before packaging fails.
+retry() {
+  local attempt=1
+  until "$@"; do
+    [ "$attempt" -lt 4 ] || return 1
+    printf 'macos-dmg: %s %s failed (attempt %s of 4), retrying\n' "$1" "${2:-}" "$attempt" >&2
+    sleep $((attempt * 10))
+    attempt=$((attempt + 1))
+  done
+}
+create_image() {
+  rm -f "$work/writable.dmg"
+  hdiutil create -quiet -fs HFS+ -format UDRW -volname "Novamira HQ" \
+    -srcfolder "$work/source" "$work/writable.dmg"
+}
+convert_image() {
+  rm -f "$output"
+  hdiutil convert -quiet "$work/writable.dmg" -format UDZO -imagekey zlib-level=9 -o "$output"
+}
 mkdir -p "$work/source/.background" "$work/mount"
 ditto "$app" "$work/source/Novamira HQ.app"
 ln -s /Applications "$work/source/Applications"
 swift "$root/scripts/macos/dmg-background.swift" "$work/source/.background/install.png"
-hdiutil create -quiet -fs HFS+ -format UDRW -volname "Novamira HQ" \
-  -srcfolder "$work/source" "$work/writable.dmg"
-hdiutil attach -quiet -nobrowse -noautoopen -mountpoint "$work/mount" "$work/writable.dmg"
+retry create_image
+retry hdiutil attach -quiet -nobrowse -noautoopen -mountpoint "$work/mount" "$work/writable.dmg"
 mounted=yes
 # Finder writes .DS_Store in the image, not inside the signed application.
 osascript "$root/scripts/macos/dmg-layout.applescript" "$work/mount"
 sync
-hdiutil detach -quiet "$work/mount"
+# Finder or Spotlight can keep the image busy after the layout has been
+# written and synced. A forced detach is then the last resort; the converted
+# image is verified, signed and notarized afterwards.
+retry hdiutil detach -quiet "$work/mount" ||
+  { sync; hdiutil detach -quiet -force "$work/mount"; }
 mounted=
-hdiutil convert -quiet "$work/writable.dmg" -format UDZO -imagekey zlib-level=9 -o "$output"
-hdiutil verify "$output"
+retry convert_image
+retry hdiutil verify "$output"

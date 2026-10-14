@@ -187,6 +187,15 @@ test("5: neither bundle crosses the hosting safety boundary", async () => {
   );
 });
 
+test("5b: the hosting bundle asks for the cPanel temporary installer approval only after it is required", async () => {
+  const { hosting } = await bundles();
+  assert.ok(
+    hosting.content.includes(
+      "cPanel, directly or through WHM, without WP Toolkit needs the user's explicit approval (`--temporary-installer`) before HQ uploads a temporary installer; ask for it only after setup returns `confirmation_required`.",
+    ),
+  );
+});
+
 test("6: the hosting bundle hands off to @novamira/cli and nothing else runs novamira", async () => {
   const { hosting } = await bundles();
   assert.ok(

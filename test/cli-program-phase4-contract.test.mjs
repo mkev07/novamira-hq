@@ -278,6 +278,7 @@ const COMMAND_SURFACE = {
     "--no-ai-abilities",
     "--compat-check",
     "--no-compat-check",
+    "--temporary-installer",
     "--interval-seconds",
     "--timeout-seconds",
   ],
@@ -868,7 +869,7 @@ test("the local commands are unchanged by the hosting tree", async () => {
   await isolated(async (root) => {
     const version = await run(["--version", "--json"], { root });
     assert.equal(version.code, 0);
-    assert.equal(JSON.parse(version.stdout).data.version, "1.0.0-beta4");
+    assert.equal(JSON.parse(version.stdout).data.version, "1.0.0-beta6");
 
     // `config path` keeps its name, its place and its output after the hosting
     // profile subcommands joined the same `config` command.

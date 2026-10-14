@@ -413,6 +413,10 @@ test("MCP clients can read built-in guidance and inventory without an installed 
   const guide = JSON.parse(messages[1].result.content[0].text);
   assert.equal(guide.version, "1.2.3");
   assert.match(guide.guide, /Claude Desktop, Claude Code/);
+  assert.match(
+    guide.guide,
+    /On cPanel \(directly or through WHM\) without WP Toolkit, setup needs a separate explicit approval for a temporary installer \(allowTemporaryInstaller\)/,
+  );
   const inventory = JSON.parse(messages[2].result.content[0].text);
   assert.equal(inventory.complete, false);
   assert.equal(inventory.sources[0].source, "wordpress");
@@ -617,6 +621,8 @@ test("maintenance and provisioning are fixed typed mutations", async () => {
       kind: "create-backup",
       envId: "env-target",
       body: { tag: "before upgrade" },
+      // An MCP call never blocks on a provider that waits (cPanel, WHM).
+      wait: false,
     },
     [
       "--profile",
@@ -635,6 +641,46 @@ test("maintenance and provisioning are fixed typed mutations", async () => {
   ]);
   assert.equal(messages[1].result.isError, undefined);
   assert.equal(messages[2].result.isError, undefined);
+});
+
+test("the temporary installer approval is a separate optional MCP argument mapped to its CLI flag", async () => {
+  const { messages, calls } = await session([
+    initialize,
+    initialized,
+    request(2, "tools/list", {}),
+    request(3, "tools/call", {
+      name: "hosting_novamira_setup",
+      arguments: {
+        profile: "production",
+        environmentId: "domain:wp.example.test",
+        enableAiAbilities: true,
+        allowTemporaryInstaller: true,
+      },
+    }),
+  ]);
+  const tool = messages[1].result.tools.find(
+    (entry) => entry.name === "hosting_novamira_setup",
+  );
+  assert.equal(
+    tool.inputSchema.properties.allowTemporaryInstaller.type,
+    "boolean",
+  );
+  assert.ok(!tool.inputSchema.required.includes("allowTemporaryInstaller"));
+  // WHM reaches the same accounts, so the tools name it where they name cPanel.
+  assert.match(
+    tool.inputSchema.properties.allowTemporaryInstaller.description,
+    /^cPanel \(directly or through WHM\) accounts without WP Toolkit only\./,
+  );
+  assert.match(
+    messages[1].result.tools.find(
+      (entry) => entry.name === "hosting_backup_create",
+    ).description,
+    /such as cPanel \(directly or through WHM\), only starts it/,
+  );
+  assert.deepEqual(calls.at(-1).slice(-2), [
+    "--ai-abilities",
+    "--temporary-installer",
+  ]);
 });
 
 test("AI setup requires positive approval before any CLI or provider call", async () => {

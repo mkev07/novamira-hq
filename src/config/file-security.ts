@@ -57,6 +57,22 @@ export interface CommandRunner {
   ): Promise<{ readonly code: number; readonly stdout: string }>;
 }
 
+/**
+ * One request line for the ACL worker. powershell.exe decodes its stdin with
+ * the console code page, not UTF-8, so a path with a letter outside ASCII
+ * (`C:\Users\Özün`, `José`) would arrive altered, the lookup would fail, and
+ * every check in the batch would fail with it. JSON `\u` escapes keep the line
+ * ASCII-only; `ConvertFrom-Json` restores the exact path.
+ */
+export function aclWorkerRequest(
+  checks: readonly { readonly path: string; readonly directory: boolean }[],
+): string {
+  return JSON.stringify(checks).replace(
+    /[\u007f-\uffff]/g,
+    (unit) => `\\u${unit.charCodeAt(0).toString(16).padStart(4, "0")}`,
+  );
+}
+
 export class SpawnCommandRunner implements CommandRunner {
   private aclWorker: ChildProcessByStdio<Writable, Readable, null> | undefined;
   private aclOutput = "";
@@ -122,7 +138,7 @@ export class SpawnCommandRunner implements CommandRunner {
     checks: readonly { readonly path: string; readonly directory: boolean }[],
   ): Promise<readonly boolean[]> {
     const run = this.aclQueue.then(async () => {
-      const response = await this.aclRequest(JSON.stringify(checks));
+      const response = await this.aclRequest(aclWorkerRequest(checks));
       if (
         response.length !== checks.length ||
         Array.from(response).some((value) => value !== "0" && value !== "1")

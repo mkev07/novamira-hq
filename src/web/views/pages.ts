@@ -43,7 +43,7 @@ import { renderHostingTools, type HostingToolsView } from "./hosting-tools.js";
 import { renderRestore, type RestoreView } from "./restore.js";
 import { renderAboutPage } from "./about.js";
 import type { ProviderReadyView } from "./provider-ready.js";
-import type { McpConfiguration } from "../../mcp-connection.js";
+import type { McpConfiguration, McpRelocation } from "../../mcp-connection.js";
 import {
   renderMcpPage,
   type McpPageClient,
@@ -75,6 +75,7 @@ import {
   renderSiteConnectSuccess,
   type SiteConnectSuccessView,
 } from "./site-profiles.js";
+import { isProviderKind } from "../../config/schema.js";
 import type { ConfigView, DashboardNotice, DashboardPage } from "./types.js";
 
 export interface PageModel {
@@ -97,6 +98,8 @@ export interface PageModel {
   readonly mcp?: McpConfiguration;
   readonly mcpClient?: McpPageClient;
   readonly mcpSetup?: McpSetupState;
+  readonly mcpRelocation?: McpRelocation;
+  readonly mcpOutsideApplications?: boolean;
   readonly history?: HistoryView;
   readonly historyProfile?: string;
   readonly view: ConfigView;
@@ -129,6 +132,20 @@ export interface PageModel {
   readonly setup?: SetupView;
 }
 
+/**
+ * The setup target, with its profile's provider so the page can offer
+ * the cPanel and WHM installer approval. A provider this build does not know
+ * is left out.
+ */
+function setupWithProvider(model: PageModel): SetupView | undefined {
+  const setup = model.setup;
+  if (setup === undefined) return undefined;
+  const provider = model.view.profiles.find(
+    (profile) => profile.name === setup.profile,
+  )?.provider;
+  return isProviderKind(provider) ? { ...setup, provider } : setup;
+}
+
 /** Go's `renderMainWithSignals` switch, made exhaustive. */
 export function renderPageBody(page: DashboardPage, model: PageModel): Html {
   switch (page) {
@@ -140,6 +157,12 @@ export function renderPageBody(page: DashboardPage, model: PageModel): Html {
         model.mcp,
         model.mcpClient,
         model.mcpSetup,
+        {
+          ...(model.mcpRelocation ? { relocation: model.mcpRelocation } : {}),
+          ...(model.mcpOutsideApplications
+            ? { outsideApplications: true }
+            : {}),
+        },
       );
     case "history":
       return renderHistoryPage(
@@ -184,7 +207,7 @@ export function renderPageBody(page: DashboardPage, model: PageModel): Html {
     case "push-new":
       return renderPushNewPage(model.pushNew, model.view, model.pushes);
     case "novamira-setup":
-      return renderSetupPage(model.setup);
+      return renderSetupPage(setupWithProvider(model));
     case "diagnostics":
       return renderDiagnosticsPage();
     case "settings":

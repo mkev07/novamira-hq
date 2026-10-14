@@ -194,7 +194,9 @@ export function createProviderSaveHandler(context: RouteContext): RouteHandler {
         let notice: DashboardNotice;
         let ready: ProviderReadyView | undefined;
         try {
-          await context.providers.validate(saved.name);
+          // A provider checked before saving (WHM) is not asked again.
+          if (saved.verified !== true)
+            await context.providers.validate(saved.name);
           context.providers.recordChecked(saved.name, context.now());
           notice = mutationNotice(
             `${saved.name}: account saved and access verified.`,

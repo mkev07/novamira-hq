@@ -474,6 +474,76 @@ test("config add --company auto reports the provider failure", async () => {
   );
 });
 
+test("config add whm validates the token whatever --company says, and a failure saves nothing", async () => {
+  for (const company of [undefined, "root", "none", "auto"]) {
+    const label = String(company);
+    const hosting = fakeHosting({
+      validate: () => {
+        throw new CliError(
+          "credential_invalid",
+          "This WHM user cannot list accounts. Ask the server owner to give it the list-accts privilege (WHM » Edit Reseller Nameservers and Privileges).",
+        );
+      },
+    });
+    await isolated(
+      async (cli) => {
+        const { code, body } = await cli.envelope([
+          "config",
+          "add",
+          "whm",
+          "--credential-stdin",
+          "--api-base-url",
+          "https://server.example.test:2087",
+          ...(company === undefined ? [] : ["--company", company]),
+        ]);
+        assert.equal(code, 3, label);
+        assert.equal(body.error.code, "credential_invalid", label);
+        assert.equal(cli.hosting.entries.length, 1, label);
+        // No profile, and the stored secret was rolled back.
+        await assert.rejects(cli.document(), undefined, label);
+        assert.equal(cli.credentials.records.size, 0, label);
+      },
+      { hosting, io: fakeIo({ stdin: STDIN_SECRET }) },
+    );
+  }
+  // A valid root token is saved, with the user it was checked as.
+  for (const [company, saved] of [
+    ["root", "root"],
+    ["none", undefined],
+  ])
+    await isolated(
+      async (cli) => {
+        const { code } = await cli.envelope([
+          "config",
+          "add",
+          "whm",
+          "--api-base-url",
+          "https://server.example.test:2087",
+          "--company",
+          company,
+        ]);
+        assert.equal(code, 0, company);
+        assert.equal(cli.hosting.entries.length, 1, company);
+        assert.equal(cli.hosting.entries[0].profile.companyId, saved, company);
+        assert.equal(
+          (await cli.document()).hostingProfiles.whm.companyId,
+          saved,
+          company,
+        );
+      },
+      {
+        hosting: fakeHosting({
+          validate: () => ({
+            provider: "whm",
+            status: "active",
+            companyId: "root",
+            credential: "env:WHM_API_TOKEN",
+          }),
+        }),
+      },
+    );
+});
+
 test("config add --profile names the created profile", async () => {
   await isolated(async (cli) => {
     const { body } = await cli.envelope([
@@ -525,6 +595,8 @@ test("config add rejects an unknown provider with usage_error and the allowed se
       "cloudways",
       "plesk",
       "xcloud",
+      "cpanel",
+      "whm",
     ]);
     assert.equal(cli.hosting.entries.length, 0);
   });

@@ -437,6 +437,8 @@ function hostingProfileMenu(
     "cloudways",
     "instawp",
     "xcloud",
+    "cpanel",
+    "whm",
   ].includes(group.provider)
     ? html`<a class="profile-menu-action"${hrefAttr(url("/backup-create", { profile: group.profile, site: site.id, env: env.id }))}>Create backup…</a>`
     : false;

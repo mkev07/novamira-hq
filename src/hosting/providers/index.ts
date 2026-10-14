@@ -20,6 +20,7 @@
 import type { ProviderKind } from "../../config/schema.js";
 import type { ProviderClientFactory } from "../factory.js";
 import { createCloudwaysClient } from "./cloudways.js";
+import { createCpanelClient } from "./cpanel.js";
 import { createHostingerClient } from "./hostinger.js";
 import { createInstaWpClient } from "./instawp.js";
 import { createKinstaClient } from "./kinsta.js";
@@ -27,6 +28,7 @@ import { createPantheonClient } from "./pantheon.js";
 import { createPressableClient } from "./pressable.js";
 import { createPleskClient } from "./plesk.js";
 import { createRocketNetClient } from "./rocketnet.js";
+import { createWhmClient } from "./whm.js";
 import { createWpEngineClient } from "./wpengine.js";
 import { createXCloudClient } from "./xcloud.js";
 
@@ -47,10 +49,13 @@ export const PROVIDER_REGISTRY: Readonly<
   cloudways: createCloudwaysClient,
   plesk: createPleskClient,
   xcloud: createXCloudClient,
+  cpanel: createCpanelClient,
+  whm: createWhmClient,
 };
 
 export {
   createCloudwaysClient,
+  createCpanelClient,
   createHostingerClient,
   createInstaWpClient,
   createKinstaClient,
@@ -58,6 +63,7 @@ export {
   createPressableClient,
   createPleskClient,
   createRocketNetClient,
+  createWhmClient,
   createWpEngineClient,
   createXCloudClient,
 };

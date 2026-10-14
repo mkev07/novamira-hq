@@ -2,13 +2,28 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 import { spawn } from "node:child_process";
+import { join } from "node:path";
+import type { FileSecurity } from "../config/file-security.js";
 import { CliError } from "../errors.js";
 import { asRecord } from "../json.js";
 import type {
   McpClient,
   McpConnectionService,
+  McpDetectedClient,
   McpLaunch,
+  McpRelocation,
 } from "../mcp-connection.js";
+import {
+  DETECTED_CLIENTS,
+  findClientsUsing,
+  isOutsideApplications,
+  nextLaunchRecord,
+  readLaunchRecord,
+  sameLaunchRecord,
+  writeLaunchRecord,
+  type DetectionHost,
+  type LaunchRecord,
+} from "./relocation.js";
 
 type SpawnProcess = typeof spawn;
 
@@ -65,10 +80,19 @@ function tomlString(value: string): string {
   return JSON.stringify(value).replace(/\\u0008/g, "\\b");
 }
 
+/** Desktop only: where the launch record lives and how clients are read. */
+export interface RelocationOptions {
+  readonly stateDir: string;
+  readonly security: FileSecurity;
+  readonly executable: string;
+  readonly host: DetectionHost;
+}
+
 export function createMcpConnectionService(
   base: McpLaunch,
   environment: NodeJS.ProcessEnv,
   spawnProcess: SpawnProcess = spawn,
+  relocation?: RelocationOptions,
 ): McpConnectionService {
   const configuration: McpConnectionService["configuration"] = () => {
     const launch = {
@@ -116,9 +140,13 @@ export function createMcpConnectionService(
       ].join("\n"),
     };
   };
+  const relocationMembers = relocation
+    ? relocationService(base.command, relocation)
+    : {};
   return {
+    ...relocationMembers,
     configuration,
-    async connect(client) {
+    async connect(client, options = {}) {
       const config = configuration();
       const launchEnvironment = JSON.parse(config.claude) as {
         mcpServers: Record<
@@ -158,7 +186,16 @@ export function createMcpConnectionService(
           });
         });
 
-      if (client !== "vscode" && (await run(["mcp", "get", "novamira-hq"])))
+      if (options.replace === true && client !== "vscode")
+        await run(
+          client === "claude-code"
+            ? ["mcp", "remove", "--scope", "user", "novamira-hq"]
+            : ["mcp", "remove", "novamira-hq"],
+        );
+      else if (
+        client !== "vscode" &&
+        (await run(["mcp", "get", "novamira-hq"]))
+      )
         return "existing";
       if (await run(connector.args))
         return client === "vscode" ? "sent" : "configured";
@@ -248,6 +285,81 @@ export function createMcpConnectionService(
             .join("\n") + "\n",
         );
       });
+    },
+  };
+}
+
+/** Detection spawns client CLIs; page views within a minute reuse it. */
+const DETECTION_TTL_MS = 60_000;
+
+/** Remembers the launch command and reports clients left on old ones. */
+function relocationService(
+  current: string,
+  options: RelocationOptions,
+  now: () => number = Date.now,
+): Pick<
+  McpConnectionService,
+  "relocation" | "dismissRelocation" | "outsideApplications"
+> {
+  const record = join(options.stateDir, "mcp-launch.json");
+  const detected = new Map<
+    string,
+    { readonly at: number; readonly clients: readonly McpDetectedClient[] }
+  >();
+  const clientsUsing = async (
+    previous: string,
+  ): Promise<readonly McpDetectedClient[]> => {
+    const cached = detected.get(previous);
+    if (cached && now() - cached.at < DETECTION_TTL_MS) return cached.clients;
+    // An old executable still in place (copied, or replaced by the command
+    // launcher) keeps working for the clients configured with it.
+    const clients = (await options.host.exists(previous))
+      ? []
+      : await findClientsUsing(previous, options.host);
+    detected.set(previous, { at: now(), clients });
+    return clients;
+  };
+  const save = async (
+    stored: LaunchRecord | undefined,
+    next: LaunchRecord,
+  ): Promise<void> => {
+    if (!sameLaunchRecord(stored, next))
+      await writeLaunchRecord(record, next, options.security);
+  };
+  return {
+    outsideApplications: isOutsideApplications(
+      options.executable,
+      options.host.platform,
+      options.host.home,
+    ),
+    async relocation(): Promise<McpRelocation | undefined> {
+      const stored = await readLaunchRecord(record);
+      const next = nextLaunchRecord(stored, current);
+      const kept: string[] = [];
+      const clients = new Set<McpDetectedClient>();
+      for (const previous of next.previous ?? []) {
+        const found = await clientsUsing(previous);
+        if (found.length === 0) continue;
+        kept.push(previous);
+        for (const client of found) clients.add(client);
+      }
+      await save(
+        stored,
+        kept.length > 0
+          ? { command: current, previous: kept }
+          : { command: current },
+      );
+      return kept.length > 0
+        ? {
+            previous: kept,
+            current,
+            clients: DETECTED_CLIENTS.filter((client) => clients.has(client)),
+          }
+        : undefined;
+    },
+    async dismissRelocation(): Promise<void> {
+      detected.clear();
+      await writeLaunchRecord(record, { command: current }, options.security);
     },
   };
 }

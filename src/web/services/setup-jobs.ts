@@ -104,6 +104,8 @@ export interface SetupJobStartInput {
   readonly envId: string;
   /** Explicit activation on an existing installation; new installs enable it. */
   readonly aiAbilities: boolean;
+  /** cPanel (directly or through WHM) without WP Toolkit: explicit approval for the temporary installer. */
+  readonly temporaryInstaller?: boolean;
 }
 
 export interface SetupJobService {
@@ -377,7 +379,13 @@ export function createSetupJobService(
                     append(id, level, message);
                   },
                 },
-                { envId, aiAbilities: input.aiAbilities },
+                {
+                  envId,
+                  aiAbilities: input.aiAbilities,
+                  ...(input.temporaryInstaller === true
+                    ? { temporaryInstaller: true }
+                    : {}),
+                },
               );
               finishOk(id, result);
             } catch (error) {

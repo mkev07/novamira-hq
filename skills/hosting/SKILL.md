@@ -6,7 +6,7 @@ allowed-tools: Bash(novamira-hq:*)
 
 # Novamira HQ Hosting
 
-Use `novamira-hq hosting ...` for provider-neutral WordPress hosting operations. Kinsta, InstaWP, Pantheon, Pressable, WP Engine, Rocket.net, Hostinger, Cloudways, Plesk, and xCloud are implemented, but agents should use the generic hosting command names and inspect provider capabilities before reaching for a provider-specific workflow.
+Use `novamira-hq hosting ...` for provider-neutral WordPress hosting operations. Kinsta, InstaWP, Pantheon, Pressable, WP Engine, Rocket.net, Hostinger, Cloudways, Plesk, xCloud, cPanel, and WHM are implemented, but agents should use the generic hosting command names and inspect provider capabilities before reaching for a provider-specific workflow.
 
 Always use `--json` for automation. Every hosting operation requires an explicit global `--profile`; there is no default and no single-profile fallback.
 
@@ -110,6 +110,8 @@ novamira-hq --json --profile <hosting-profile> hosting novamira setup --env <env
 `hosting novamira setup` blocks environments running PHP older than 8.0 and inspects an existing Novamira before mutation. Too-old or unreadable versions stop without replacement, even with `--force`; update explicitly first. New installations enable AI Abilities. Compatible existing installations preserve both AI Abilities options unless `--ai-abilities` is explicitly passed. This is independent of the reinstall flag. Setup discovers the site URL with `wp option get home` unless `--url` supplies one, checks public compatibility metadata unless `--no-compat-check` is given, and prints the handoff below.
 
 It **writes no credential and stores no profile**. CLI and MCP require no app acceptance. AI Abilities permit PHP execution and filesystem/data changes; an AI may request activation without another human prompt. Connecting an existing site does not enable them. A copied site may preserve an old domain binding; use the explicit activation option only when activation on the current domain is intended.
+
+cPanel, directly or through WHM, without WP Toolkit needs the user's explicit approval (`--temporary-installer`) before HQ uploads a temporary installer; ask for it only after setup returns `confirmation_required`.
 
 ## Handoff
 

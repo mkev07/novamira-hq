@@ -24,6 +24,7 @@ import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
+import { runInNewContext } from "node:vm";
 
 import { defaultFileSecurity } from "../dist/config/file-security.js";
 import { atomicWriteFile } from "../dist/config/atomic-write.js";
@@ -32,6 +33,7 @@ import { platformPaths } from "../dist/config/paths.js";
 import { ConfigStore } from "../dist/config/profiles.js";
 import { credentialId } from "../dist/credentials/store.js";
 import { createHostingClientFactory } from "../dist/hosting/factory.js";
+import { createWhmClient } from "../dist/hosting/providers/whm.js";
 import { createDashboardServer } from "../dist/web/index.js";
 import { shuffledProviderKinds } from "../dist/web/views/providers.js";
 
@@ -122,8 +124,10 @@ async function fixture(options = {}) {
         options.onClient?.();
         return fakeProviderClient(options.client ?? {});
       },
+      ...options.registry,
     },
     env: environment,
+    ...(options.http === undefined ? {} : { http: options.http }),
     // The same wiring `src/main.ts` gives the real factory, so a `stored:`
     // reference written by the save handler is readable by the validate one.
     resolver: {
@@ -353,6 +357,7 @@ test("2: the form chooses a provider before requesting account details", async (
     ">Kinsta</strong>",
     ">Cloudways</strong>",
     ">Plesk</strong>",
+    ">WHM</strong>",
     "Step 2 of 2",
     "Change provider",
     'data-class="{hidden: $providerForm.detailsOpen}"',
@@ -367,7 +372,11 @@ test("2: the form chooses a provider before requesting account details", async (
     "Kinsta company ID",
     "Paste the Rocket.net password.",
     "Paste a Cloudways Access Token. Find it under Profile → API Integration → Create Access Token.",
-    "Plesk panel URL",
+    "cPanel username",
+    "Security → Manage API Tokens",
+    "WHM user",
+    "Development → Manage API Tokens",
+    "Panel URL",
     'data-bind="providerForm.apiBaseUrl"',
     "Without it, Novamira HQ lists hosted domains.",
     ">Cancel</button>",
@@ -390,10 +399,85 @@ test("2: the form chooses a provider before requesting account details", async (
     assert.ok(!markup.includes(gone), gone);
 });
 
+/** The browser's attribute decoding, enough for the entities the renderer emits. */
+function decodeAttribute(value) {
+  return value
+    .replaceAll("&quot;", '"')
+    .replaceAll("&#39;", "'")
+    .replaceAll("&lt;", "<")
+    .replaceAll("&gt;", ">")
+    .replaceAll("&amp;", "&");
+}
+
+test("2a: the panel URL placeholder and help follow the selected provider", async () => {
+  const { server } = await fixture({ config: PROFILE_CONFIG });
+  const markup = await page(server, "/hosting-accounts");
+  // Evaluate the field's own Datastar expressions the way the browser does:
+  // the lookup table travels in the attribute, indexed by the provider signal.
+  const attribute = (pattern) => {
+    const found = pattern.exec(markup);
+    assert.ok(found, String(pattern));
+    return decodeAttribute(found[1]);
+  };
+  const placeholder = attribute(
+    /data-attr="(\{placeholder: [^"]*panelUrlPlaceholder[^"]*\})"/,
+  );
+  const help = attribute(/data-text="([^"]*panelUrlHelp[^"]*)"/);
+  const readPlaceholder = (provider) =>
+    runInNewContext(`(${placeholder})`, { $providerForm: { provider } })
+      .placeholder;
+  const readHelp = (provider) =>
+    runInNewContext(help, { $providerForm: { provider } });
+
+  assert.equal(readPlaceholder("plesk"), "https://panel.example.com:8443");
+  assert.equal(readPlaceholder("cpanel"), "https://server.example.com:2083");
+  assert.equal(readPlaceholder("whm"), "https://server.example.com:2087");
+  assert.equal(
+    readHelp("plesk"),
+    "Enter the HTTPS panel URL. With WP Toolkit, Novamira HQ can set up Novamira and create or restore WordPress backups. Without it, Novamira HQ lists hosted domains.",
+  );
+  assert.equal(
+    readHelp("cpanel"),
+    "Use the address you sign in to cPanel with, such as https://server.example.com:2083 or https://cpanel.example.com.",
+  );
+  assert.equal(
+    readHelp("whm"),
+    "Use the address you sign in to WHM with, such as https://server.example.com:2087.",
+  );
+  // Neither provider's wording leaks into the other's help.
+  assert.ok(!readHelp("cpanel").includes("WP Toolkit"));
+  assert.ok(!readHelp("plesk").includes("cPanel"));
+  assert.ok(!readHelp("whm").includes("cPanel"));
+  // The field is hidden for every other provider; the fallback stays neutral.
+  assert.ok(!readPlaceholder("kinsta").includes("8443"));
+  assert.ok(!readHelp("kinsta").includes("WP Toolkit"));
+  // The input carries no handwritten Plesk placeholder or help any more.
+  assert.ok(!markup.includes('placeholder="https://panel.example.com:8443"'));
+  assert.ok(!markup.includes(">Enter the HTTPS panel URL."));
+});
+
+test("2c: the panel URL field is shown for Plesk, cPanel and WHM only", async () => {
+  const { server } = await fixture({ config: PROFILE_CONFIG });
+  const markup = await page(server, "/hosting-accounts");
+  const found = /<label data-class="([^"]*)"><span>Panel URL<\/span>/.exec(
+    markup,
+  );
+  assert.ok(found, "the Panel URL label carries a visibility expression");
+  const hidden = (provider) =>
+    runInNewContext(`(${decodeAttribute(found[1])})`, {
+      $providerForm: { provider },
+    }).hidden;
+  for (const provider of ["plesk", "cpanel", "whm"])
+    assert.equal(hidden(provider), false, provider);
+  for (const provider of ["kinsta", "cloudways", "xcloud"])
+    assert.equal(hidden(provider), true, provider);
+});
+
 test("2b: provider choices can be shuffled without favoring the catalog order", () => {
   const shuffled = shuffledProviderKinds(() => 0);
   assert.deepEqual([...shuffled].sort(), [
     "cloudways",
+    "cpanel",
     "hostinger",
     "instawp",
     "kinsta",
@@ -401,6 +485,7 @@ test("2b: provider choices can be shuffled without favoring the catalog order", 
     "plesk",
     "pressable",
     "rocketnet",
+    "whm",
     "wpengine",
     "xcloud",
   ]);
@@ -668,6 +753,191 @@ test("an invalid account name reports its field and permits a corrected retry", 
     (await store.listHostingProfiles()).map(({ name }) => name),
     ["Città"],
   );
+});
+
+test("cPanel needs a panel address and a username before anything is saved", async () => {
+  const { server, store } = await fixture();
+  const form = {
+    profile: "shared",
+    provider: "cpanel",
+    credentialValue: SECRET,
+    credentialEnv: "",
+    companyId: "",
+    apiBaseUrl: "",
+    force: false,
+  };
+  const noUrl = await save(server, { ...form, companyId: "wptest" });
+  assert.match(
+    noUrl.recorder.find("provider-flash").markup,
+    /Enter the HTTPS cPanel address before connecting/,
+  );
+  const noUser = await save(server, {
+    ...form,
+    apiBaseUrl: "https://server.example.test:2083",
+  });
+  assert.match(
+    noUser.recorder.find("provider-flash").markup,
+    /Enter the cPanel username before connecting/,
+  );
+  for (const { recorder } of [noUrl, noUser])
+    assert.ok(!recorder.body.includes(SECRET));
+  assert.deepEqual(await store.listHostingProfiles(), []);
+
+  const saved = await save(server, {
+    ...form,
+    companyId: "wptest",
+    apiBaseUrl: "https://server.example.test:2083",
+  });
+  assert.ok(!saved.recorder.body.includes(SECRET));
+  const profile = (await store.load()).hostingProfiles.shared;
+  assert.equal(profile.provider, "cpanel");
+  assert.equal(profile.companyId, "wptest");
+  assert.equal(profile.apiBaseUrl, "https://server.example.test:2083");
+});
+
+/**
+ * The real WHM client over a mock WHM: `listAllowed: false` refuses
+ * `listaccts` as WHM refuses a missing privilege. Every request is recorded by
+ * its path, and every authorization header in `authorizations`.
+ */
+function whmServer({ listAllowed = true } = {}) {
+  const authorizations = [];
+  const requests = [];
+  const ok = (command, data) =>
+    new Response(
+      JSON.stringify({
+        metadata: { command, result: 1, reason: "OK", version: 1 },
+        data,
+      }),
+      { headers: { "content-type": "application/json" } },
+    );
+  const fetch = async (input, init = {}) => {
+    const url = new URL(String(input));
+    requests.push(url.pathname);
+    authorizations.push(new Headers(init.headers).get("authorization"));
+    if (url.pathname === "/json-api/listaccts")
+      return listAllowed
+        ? ok("listaccts", { acct: [] })
+        : new Response(
+            JSON.stringify({
+              metadata: {
+                command: "listaccts",
+                result: 0,
+                reason:
+                  "Permission denied: You do not have the required privileges to run “listaccts”.",
+                version: 1,
+              },
+            }),
+            { headers: { "content-type": "application/json" } },
+          );
+    return new Response("{}", { status: 404 });
+  };
+  return {
+    requests,
+    authorizations,
+    options: {
+      registry: { whm: createWhmClient },
+      http: { fetch, retry: { maxAttempts: 1 } },
+    },
+  };
+}
+
+const WHM_FORM = {
+  profile: "server",
+  provider: "whm",
+  credentialValue: SECRET,
+  credentialEnv: "",
+  companyId: "",
+  apiBaseUrl: "https://server.example.test:2087",
+  force: false,
+};
+
+async function storedSecret(credentialsDir, security, id) {
+  const { createCredentialStore } =
+    await import("../dist/credentials/store.js");
+  const credentials = await createCredentialStore(credentialsDir, security, {
+    preference: "file",
+  });
+  return credentials.read(id);
+}
+
+test("WHM needs an address, and a blank user is saved as root", async () => {
+  const whm = whmServer();
+  const { server, store } = await fixture(whm.options);
+  const noUrl = await save(server, { ...WHM_FORM, apiBaseUrl: "" });
+  assert.match(
+    noUrl.recorder.find("provider-flash").markup,
+    /Enter the HTTPS WHM address before connecting/,
+  );
+  assert.ok(!noUrl.recorder.body.includes(SECRET));
+  assert.deepEqual(await store.listHostingProfiles(), []);
+
+  const saved = await save(server, WHM_FORM);
+  assert.ok(!saved.recorder.body.includes(SECRET));
+  const profile = (await store.load()).hostingProfiles.server;
+  assert.equal(profile.provider, "whm");
+  assert.equal(profile.companyId, "root");
+  assert.equal(profile.apiBaseUrl, "https://server.example.test:2087");
+});
+
+test("a WHM token that cannot list accounts is refused before anything is saved", async () => {
+  const whm = whmServer({ listAllowed: false });
+  const { server, store, credentialsDir, security } = await fixture(
+    whm.options,
+  );
+  const { recorder } = await save(server, WHM_FORM);
+  assert.match(
+    recorder.find("provider-flash").markup,
+    /This WHM user cannot list accounts\. Ask the server owner to give it the list-accts privilege/,
+  );
+  assert.ok(!recorder.body.includes(SECRET));
+  assert.deepEqual(await store.listHostingProfiles(), []);
+  assert.equal(
+    await storedSecret(
+      credentialsDir,
+      security,
+      credentialId({ provider: "whm", profile: "server" }),
+    ),
+    undefined,
+  );
+  assert.deepEqual(whm.requests, ["/json-api/listaccts"]);
+  // A WHM address on a cPanel port is refused the same way.
+  const port = await save(server, {
+    ...WHM_FORM,
+    apiBaseUrl: "https://server.example.test:2083",
+  });
+  assert.match(
+    port.recorder.find("provider-flash").markup,
+    /WHM needs its own address, usually on port 2087, not the cPanel port\./,
+  );
+  assert.deepEqual(await store.listHostingProfiles(), []);
+});
+
+test("a valid WHM root token is saved verified, checked once", async () => {
+  const whm = whmServer();
+  const { server, store, credentialsDir, security } = await fixture(
+    whm.options,
+  );
+  const { recorder } = await save(server, WHM_FORM);
+  assert.ok(await store.getHostingProfile("server"));
+  const stored = await storedSecret(
+    credentialsDir,
+    security,
+    credentialId({ provider: "whm", profile: "server" }),
+  );
+  assert.equal(stored?.reveal(), SECRET);
+  assert.ok(recorder.find("main").markup.includes("Hosting account ready"));
+  assert.ok(!recorder.body.includes(SECRET));
+  assert.deepEqual(whm.requests, ["/json-api/listaccts"]);
+});
+
+test("a WHM reseller token is checked and saved as that reseller", async () => {
+  const whm = whmServer();
+  const { server, store } = await fixture(whm.options);
+  const { recorder } = await save(server, { ...WHM_FORM, companyId: "wpres" });
+  assert.ok(recorder.find("main").markup.includes("Hosting account ready"));
+  assert.equal((await store.load()).hostingProfiles.server.companyId, "wpres");
+  assert.deepEqual(whm.authorizations, [`whm wpres:${SECRET}`]);
 });
 
 test("saving checks the connection immediately and reports an unverified saved account honestly", async () => {

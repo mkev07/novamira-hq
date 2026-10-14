@@ -1,5 +1,78 @@
 # Changelog
 
+## 1.0.0-beta6 - 2026-10-13
+
+### Added
+
+- WHM servers can now be connected with a reseller's API token as well as
+  root's: enter the reseller's user name as the WHM user. HQ then lists
+  WordPress, creates and lists backups only for the accounts that reseller
+  owns, and sets up Novamira with the temporary installer after your
+  approval, since WHM's WP Toolkit does not accept reseller tokens. The
+  reseller needs the list-accts privilege, and create-user-session for the
+  installer; when one is missing, HQ names it.
+
+### Changed
+
+- Windows releases now ship only the installer,
+  `novamira-hq-setup-windows-x86_64.exe`. The portable
+  `novamira-hq-desktop-windows-x86_64.exe` is no longer published; download
+  the installer from https://novamira.ai/hq if your version does not offer
+  the update.
+
+## 1.0.0-beta5 - 2026-10-12
+
+### Changed
+
+- The bundled Novamira CLI is updated to 1.3.4. On Windows, a site profile
+  that stores its credentials in a file can log in again after its stored
+  credential is removed, including after a failed token refresh, instead of
+  stopping with an internal error.
+
+### Added
+
+- Configure your AI now includes Antigravity. Antigravity cannot add a local
+  server by itself, so HQ gives you the configuration to paste into
+  `~/.gemini/config/mcp_config.json`. Antigravity, the Antigravity IDE and the
+  agy CLI all read that file.
+- When Novamira HQ runs from a different place than before (moved,
+  reinstalled, or installed after using the portable Windows app), Configure
+  your AI lists the AI clients that still start the old location and offers
+  the fix for each one. On macOS it also warns when Novamira HQ runs outside
+  Applications.
+- Windows now has an installer. It installs Novamira HQ for your user account
+  in a fixed folder, adds it to the Start menu and to Installed apps, and
+  updates replace the app in the same place, so AI clients you configured keep
+  working. Uninstalling keeps your settings and credentials.
+- cPanel hosting accounts can now be connected with the HTTPS cPanel address
+  (panel URL), the cPanel username and an API token. HQ lists WordPress at the
+  root of each domain, creates and lists whole-account backups (they count
+  against the account's disk quota), and sets up Novamira: through WP Toolkit
+  when the account has it, otherwise, after your approval, through a temporary
+  installer that removes itself after one run; when Novamira is already
+  installed, HQ uploads only that installer, no ZIP.
+  Restoring backups, clearing caches and changing PHP are not available
+  through cPanel's user API.
+- WHM servers can now be connected with the HTTPS WHM address and a root API
+  token. HQ lists WordPress at the root of every cPanel account's domains,
+  creates and lists account backups, and installs Novamira through WHM's WP
+  Toolkit or, with your approval, a temporary installer.
+
+### Fixed
+
+- On Windows, Novamira HQ no longer stops at startup with "The application
+  acknowledgement record is unreadable or unsafe" when the Windows user name
+  (or the folder that holds HQ's data) contains letters outside ASCII, such as
+  Ö, Ş or é. HQ passed those paths to its permission check in a form Windows
+  PowerShell misread.
+- On Windows, opening Novamira HQ from the Start menu no longer leaves a
+  console or Windows Terminal window open beside the app.
+- On macOS, Claude Code started from a terminal no longer stops with
+  "suspended (tty input)" when it starts HQ's connector, and moving the mouse
+  no longer prints stray characters at the prompt. HQ's lookup of the
+  programs installed on the Mac took over the terminal and did not give it
+  back.
+
 ## 1.0.0-beta4 - 2026-10-07
 
 ### Changed

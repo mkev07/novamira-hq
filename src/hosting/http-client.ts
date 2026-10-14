@@ -38,6 +38,16 @@ export type HttpBody =
       readonly kind: "text";
       readonly value: string;
       readonly contentType: string;
+    }
+  | {
+      readonly kind: "multipart";
+      readonly fields: Readonly<Record<string, string>>;
+      readonly files: readonly {
+        readonly field: string;
+        readonly filename: string;
+        readonly contentType: string;
+        readonly bytes: Uint8Array;
+      }[];
     };
 
 export interface HttpAuthorization {
@@ -118,6 +128,11 @@ export interface HttpRequest {
    * cannot produce a second side effect.
    */
   readonly idempotent?: boolean;
+  /**
+   * `"follow"` (default) chases same-origin redirects. `"return"` hands a 3xx
+   * response back unread, for session logins whose cookie rides on the redirect.
+   */
+  readonly redirect?: "follow" | "return";
   readonly retry?: Partial<RetryPolicy>;
   readonly timeoutMs?: number;
   readonly totalTimeoutMs?: number;
@@ -248,7 +263,7 @@ export function createHttpClient(options: HttpClientOptions): HttpClient {
 }
 
 interface PreparedBody {
-  readonly payload: string | undefined;
+  readonly payload: string | FormData | undefined;
   readonly contentType: string | undefined;
 }
 
@@ -258,6 +273,7 @@ interface AttemptContext {
   readonly headers: Readonly<Record<string, string>>;
   readonly body: PreparedBody;
   readonly acceptStatuses: ReadonlySet<number>;
+  readonly redirect: "follow" | "return";
   readonly secrets: readonly string[];
   readonly attempt: number;
   readonly timeoutMs: number;
@@ -387,7 +403,7 @@ class ProviderHttpClient implements HttpClient {
       ...(request.secrets ?? []),
       ...collectSensitiveValues(request.headers),
       ...collectSensitiveValues(request.query),
-      ...collectSensitiveValues(request.body),
+      ...collectSensitiveValues(secretScanView(request.body)),
     ].filter((secret) => secret !== "");
     const headers = lowerCaseHeaders({
       ...this.defaultHeaders,
@@ -410,6 +426,7 @@ class ProviderHttpClient implements HttpClient {
               : { "content-type": body.contentType, ...headers },
           body,
           acceptStatuses: new Set(request.acceptStatuses ?? []),
+          redirect: request.redirect ?? "follow",
           secrets,
           attempt,
           timeoutMs: Math.min(timeoutMs, remaining),
@@ -566,6 +583,17 @@ class ProviderHttpClient implements HttpClient {
         );
 
         if (REDIRECT_STATUSES.has(response.status)) {
+          if (hop.redirect === "return") {
+            await cancelBody(response);
+            return {
+              status: response.status,
+              headers: response.headers,
+              url: hop.url.toString(),
+              data: null as T,
+              text: "",
+              attempts: hop.attempt,
+            };
+          }
           await cancelBody(response);
           const location = response.headers.get("location");
           if (location === null || redirects >= MAX_REDIRECTS)
@@ -914,6 +942,22 @@ function parseRetryAfterMs(header: string | null): number | undefined {
   return Math.max(0, timestamp - Date.now());
 }
 
+/**
+ * The part of a body whose literals may be secrets. File bytes are binary
+ * payloads, not credentials, and walking them value by value would be slow.
+ */
+function secretScanView(body: HttpBody | undefined): unknown {
+  if (body?.kind !== "multipart") return body;
+  return {
+    fields: body.fields,
+    files: body.files.map((file) => ({
+      field: file.field,
+      filename: file.filename,
+      contentType: file.contentType,
+    })),
+  };
+}
+
 function prepareBody(body: HttpBody | undefined): PreparedBody {
   if (body === undefined) return { payload: undefined, contentType: undefined };
   switch (body.kind) {
@@ -937,6 +981,19 @@ function prepareBody(body: HttpBody | undefined): PreparedBody {
       };
     case "text":
       return { payload: body.value, contentType: body.contentType };
+    case "multipart": {
+      // fetch sets the boundary; the Content-Type header is left unset here.
+      const form = new FormData();
+      for (const [name, value] of Object.entries(body.fields))
+        form.append(name, value);
+      for (const file of body.files)
+        form.append(
+          file.field,
+          new Blob([new Uint8Array(file.bytes)], { type: file.contentType }),
+          file.filename,
+        );
+      return { payload: form, contentType: undefined };
+    }
     default: {
       const exhaustive: never = body;
       return exhaustive;

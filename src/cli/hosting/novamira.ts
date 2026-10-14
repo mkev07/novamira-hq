@@ -86,6 +86,8 @@ export interface NovamiraSetupCommandOptions {
   readonly aiAbilities?: boolean;
   /** `--compat-check`: the site compatibility read after the install. */
   readonly compatCheck?: boolean;
+  /** `--temporary-installer`: cPanel (directly or through WHM) without WP Toolkit only. */
+  readonly temporaryInstaller?: boolean;
   readonly intervalSeconds?: number;
   readonly timeoutSeconds?: number;
 }
@@ -150,6 +152,9 @@ function setupRequest(
     // CLI false means preserve existing settings; new installs retain the CLI default.
     ...(options.aiAbilities === true ? { aiAbilities: true } : {}),
     compatCheck: options.compatCheck ?? true,
+    ...(options.temporaryInstaller === true
+      ? { temporaryInstaller: true }
+      : {}),
     intervalSeconds: options.intervalSeconds ?? DEFAULT_POLL_INTERVAL_SECONDS,
     timeoutSeconds: options.timeoutSeconds ?? DEFAULT_POLL_TIMEOUT_SECONDS,
   };
@@ -272,7 +277,12 @@ export function registerNovamiraCommands(
       "verify the site satisfies the site CLI compatibility matrix",
       true,
     )
-    .option("--no-compat-check", "skip the site compatibility check");
+    .option("--no-compat-check", "skip the site compatibility check")
+    .option(
+      "--temporary-installer",
+      "cPanel or WHM account without WP Toolkit: approve uploading Novamira and a temporary installer that removes itself",
+      false,
+    );
 
   addPollingOptions(setup).action(
     async (options: NovamiraSetupCommandOptions, command: Command) =>

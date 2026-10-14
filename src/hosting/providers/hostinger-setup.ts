@@ -8,13 +8,15 @@ import { asRecord } from "../../json.js";
 import { compareSemverStrings, isSemver } from "../../semver.js";
 import type { ActionRequest } from "../client.js";
 import { jsonBody, type HttpClient } from "../http-client.js";
+import {
+  downloadNovamiraArchive,
+  providerTransfer,
+} from "../novamira-archive.js";
 import type { ActionResult } from "../types.js";
 import { hostingerInstaller } from "./hostinger-installer.js";
 
-export const HOSTINGER_NOVAMIRA_SOURCE =
-  "https://license.dynamic.ooo/api/novamira/download";
+export { NOVAMIRA_SOURCE as HOSTINGER_NOVAMIRA_SOURCE } from "../novamira-archive.js";
 const MINIMUM_VERSION = "1.11.1";
-const MAX_ZIP_BYTES = 20 * 1024 * 1024;
 type SetupRequest = Extract<ActionRequest, { kind: "setup-novamira" }>;
 
 export async function hostingerPluginInventory(
@@ -80,104 +82,12 @@ function items(value: unknown): Record<string, unknown>[] {
   return entries;
 }
 
-async function transfer(
+function transfer(
   fetcher: typeof fetch,
   url: string,
   init: RequestInit,
-  allowDownloadRedirect = false,
 ): Promise<Response> {
-  try {
-    const response = await fetcher(url, {
-      ...init,
-      redirect: allowDownloadRedirect ? "manual" : "error",
-    });
-    if (
-      allowDownloadRedirect &&
-      [301, 302, 303, 307, 308].includes(response.status)
-    )
-      return response;
-    if (!response.ok) {
-      await response.body?.cancel();
-      fail(
-        `Hostinger setup transfer failed (HTTP ${String(response.status)}). No automatic retry was made.`,
-      );
-    }
-    return response;
-  } catch (error) {
-    if (error instanceof CliError) throw error;
-    // Fetch errors may embed opaque upload URLs or header values.
-    fail(
-      "Hostinger setup transfer failed or timed out. Verify the site before retrying.",
-    );
-  }
-}
-
-async function download(
-  fetcher: typeof fetch,
-  signal: AbortSignal,
-): Promise<Uint8Array> {
-  let response = await transfer(
-    fetcher,
-    HOSTINGER_NOVAMIRA_SOURCE,
-    {
-      signal,
-      headers: { Accept: "application/zip" },
-    },
-    true,
-  );
-  if ([301, 302, 303, 307, 308].includes(response.status)) {
-    const location = response.headers.get("location");
-    await response.body?.cancel();
-    let target: URL;
-    try {
-      target = new URL(location ?? "", HOSTINGER_NOVAMIRA_SOURCE);
-    } catch {
-      fail("The official Novamira download returned an invalid redirect.");
-    }
-    if (
-      target.origin !== "https://nbg1.your-objectstorage.com" ||
-      !/^\/ooo-zips-free\/novamira\/versions\/novamira-[a-zA-Z0-9._-]+\.zip$/.test(
-        target.pathname,
-      ) ||
-      target.username ||
-      target.password ||
-      target.search ||
-      target.hash
-    )
-      fail(
-        "The official Novamira download redirected outside its trusted archive location.",
-      );
-    response = await transfer(fetcher, target.href, {
-      signal,
-      headers: { Accept: "application/zip" },
-    });
-  }
-  if (Number(response.headers.get("content-length")) > MAX_ZIP_BYTES) {
-    await response.body?.cancel();
-    fail("The Novamira archive exceeds the setup size limit.");
-  }
-  if (!response.body) fail("The Novamira archive is empty.");
-  const reader = response.body.getReader();
-  const chunks: Uint8Array[] = [];
-  let size = 0;
-  try {
-    for (;;) {
-      const chunk = await reader.read();
-      if (chunk.done) break;
-      size += chunk.value.length;
-      if (size > MAX_ZIP_BYTES) {
-        await reader.cancel();
-        fail("The Novamira archive exceeds the setup size limit.");
-      }
-      chunks.push(chunk.value);
-    }
-  } finally {
-    reader.releaseLock();
-  }
-  const bytes = Buffer.concat(chunks);
-  if (bytes.length < 4 || bytes.readUInt32LE(0) !== 0x04034b50)
-    fail("The Novamira download is not a ZIP archive.");
-  return bytes;
+  return providerTransfer(fetcher, url, init, "Hostinger");
 }
 
 /** No generic upload or PHP execution surface: only the fixed Novamira setup. */
@@ -289,7 +199,9 @@ export async function setupHostingerNovamira(
   // Preserved, already-active installs need no helper and no writes.
   if (existing?.status === "active" && !enableAi)
     return result(site.href, String(existing.version), null, []);
-  const archive = existing ? undefined : await download(fetcher, signal);
+  const archive = existing
+    ? undefined
+    : await downloadNovamiraArchive(fetcher, signal, "Hostinger");
   const slug = `novamira-hq-setup-${randomUUID()}`;
   const remoteDirectory = `wp-content/plugins/${slug}`;
   const digest = archive

@@ -56,7 +56,9 @@
  * the same reason.
  */
 
+import type { ProviderKind } from "../../config/schema.js";
 import type { ErrorCode } from "../../errors.js";
+import { cpanelFamily } from "../../hosting/types.js";
 import type { NovamiraSetupResult } from "../../provisioning/index.js";
 import * as ds from "../datastar.js";
 import {
@@ -97,6 +99,8 @@ export interface SetupView {
   readonly envName: string;
   readonly jobId: string;
   readonly job: SetupJobSnapshot | null;
+  /** The target profile's provider kind, when the config names it. */
+  readonly provider?: ProviderKind;
 }
 
 const EMPTY_SETUP: SetupView = Object.freeze({
@@ -247,6 +251,18 @@ const SETUP_DESCRIPTION =
 const AI_ABILITIES_WARNING =
   "When enabled, AI agents can execute PHP code and perform filesystem operations on this site. Use AI Abilities only on development or staging sites with a current backup.";
 
+/**
+ * cPanel accounts (directly or through WHM) without WP Toolkit need a second,
+ * separate approval. It never gates Start Setup: with WP Toolkit it is not
+ * used, and without it the provider answers `confirmation_required` through the
+ * error notice.
+ */
+function renderInstallerApproval(): Html {
+  return html`<label class="toggle setup-ai-toggle"><input type="checkbox"${ds.bind(
+    "setup.allowTemporaryInstaller",
+  )}><span>If this account has no WP Toolkit, I approve uploading Novamira and a temporary installer that removes itself after one run</span></label><p class="field-help">With WP Toolkit this is not used. The installer runs once when WordPress loads, never reads visitor requests, and is deleted afterwards.</p>`;
+}
+
 /** Go's action panel (`views.go:1237-1247`), with one label and no `Fix set up`. */
 function renderActionPanel(view: SetupView): Html {
   // Go's `setupStartURL` carried only `profile` and `env`, so the page it
@@ -264,7 +280,11 @@ function renderActionPanel(view: SetupView): Html {
   );
   return html`<section class="panel action-panel"><p class="field-help">${SETUP_DESCRIPTION}</p><label class="toggle setup-ai-toggle"><input type="checkbox"${ds.bind(
     "setup.enableAiAbilities",
-  )}><span>I understand and approve enabling AI Abilities on this site</span></label><p class="field-help">Approval is required to start setup. Without it, nothing will be installed or changed.</p><p class="field-help setup-warning"><strong>Security note:</strong> ${AI_ABILITIES_WARNING}</p><button class="button primary" type="button" disabled${ds.attrs({ disabled: or(not(signal("setup.enableAiAbilities")), signal("setup.submitting")) })}${ds.indicator("setup.submitting")}${ds.on(
+  )}><span>I understand and approve enabling AI Abilities on this site</span></label><p class="field-help">Approval is required to start setup. Without it, nothing will be installed or changed.</p><p class="field-help setup-warning"><strong>Security note:</strong> ${AI_ABILITIES_WARNING}</p>${
+    view.provider !== undefined && cpanelFamily(view.provider)
+      ? renderInstallerApproval()
+      : false
+  }<button class="button primary" type="button" disabled${ds.attrs({ disabled: or(not(signal("setup.enableAiAbilities")), signal("setup.submitting")) })}${ds.indicator("setup.submitting")}${ds.on(
     "click",
     seq(set("setup.submitting", jsBoolean(true)), action),
   )}><span${ds.classes({ hidden: signal("setup.submitting") })}>Start Setup</span><span class="loading-inline ds-toggle"${ds.classes({ open: signal("setup.submitting") })} role="status">Starting setup…</span></button></section>`;

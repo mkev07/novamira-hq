@@ -47,6 +47,19 @@ fail() {
   exit 1
 }
 
+# Apple's ticket service drops connections from hosted runners now and then
+# ("The network connection was lost", stapler Error 68). Stapling, validating
+# and assessing are idempotent, so each is repeated before the release fails.
+retry() {
+  local attempt=1
+  until "$@"; do
+    [ "$attempt" -lt 4 ] || return 1
+    printf 'macos-sign: %s %s failed (attempt %s of 4), retrying\n' "$1" "${2:-}" "$attempt" >&2
+    sleep $((attempt * 20))
+    attempt=$((attempt + 1))
+  done
+}
+
 [ "$(uname -s)" = "Darwin" ] || fail "this script signs on macOS only"
 [ $# -eq 1 ] || fail "usage: macos-sign.sh <compiled-executable>"
 
@@ -258,12 +271,12 @@ fi
 
 # Only the bundle can hold the ticket. The bare executable keeps the online
 # notarization record and nothing more, which is exactly why the bundle exists.
-xcrun stapler staple "$app" || fail "could not staple the notarization ticket"
-xcrun stapler validate "$app" || fail "the stapled ticket does not validate"
-xcrun stapler staple "$helper" || fail "could not staple the helper ticket"
-xcrun stapler validate "$helper" || fail "the helper ticket does not validate"
+retry xcrun stapler staple "$app" || fail "could not staple the notarization ticket"
+retry xcrun stapler validate "$app" || fail "the stapled ticket does not validate"
+retry xcrun stapler staple "$helper" || fail "could not staple the helper ticket"
+retry xcrun stapler validate "$helper" || fail "the helper ticket does not validate"
 
-spctl --assess --type execute -vv "$app" ||
+retry spctl --assess --type execute -vv "$app" ||
   fail "Gatekeeper did not accept the stapled bundle"
 
 # --- the release asset ------------------------------------------------------
@@ -280,9 +293,9 @@ if [ "$(field status "$dmg_submission")" != "Accepted" ]; then
   notary log "$(field id "$dmg_submission")" >&2 || true
   fail "DMG notarization was not accepted"
 fi
-xcrun stapler staple "$binary.dmg"
-xcrun stapler validate "$binary.dmg"
-spctl --assess --type open --context context:primary-signature -vv "$binary.dmg"
+retry xcrun stapler staple "$binary.dmg"
+retry xcrun stapler validate "$binary.dmg"
+retry spctl --assess --type open --context context:primary-signature -vv "$binary.dmg"
 rm -f "$api_key"
 # The bare executable finds its helper beside itself. The app has its own copy.
 ditto "$helper" "$(dirname "$binary")/Novamira HQ Credentials.app"

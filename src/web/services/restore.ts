@@ -245,6 +245,7 @@ export function createRestoreService(
                 kind: "create-backup",
                 envId: entry.review.env,
                 body: { tag: entry.review.backupId },
+                signal: controller.signal,
               },
               controller.signal,
             );

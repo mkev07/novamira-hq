@@ -103,13 +103,33 @@ test("Linux and Windows desktop assets carry their icons and are proved to run",
 
   // Both executables, and Linux's tarball beside its bare one.
   assert.match(desktop, /asset: novamira-hq-desktop-linux-x86_64\n/);
-  assert.match(desktop, /asset: novamira-hq-desktop-windows-x86_64\.exe\n/);
+  assert.match(desktop, /asset: novamira-hq-setup-windows-x86_64\.exe\n/);
+  // The portable Windows name was a one-release transition: only the
+  // installer ships, and a leg without an archive uploads its asset alone.
+  assert.ok(!desktop.includes("novamira-hq-desktop-windows-x86_64.exe"));
+  assert.match(
+    desktop,
+    /dist-desktop\/\$\{\{ matrix\.archive \|\| matrix\.asset \}\}\n/,
+  );
   assert.match(desktop, /archive: novamira-hq-desktop-linux-x86_64\.tar\.gz/);
 
   // The Windows icon is embedded by the compile; the Linux one travels in the
   // archive, which is the whole reason `--package` exists.
-  assert.match(desktop, /node scripts\/desktop-build\.mjs --package/);
+  assert.match(desktop, /run: node scripts\/desktop-build\.mjs --package\n/);
+  assert.doesNotMatch(desktop, /desktop-build\.mjs\n/);
   assert.match(desktop, /runner\.os == 'Linux'/);
+
+  // Every uploaded artifact matches what the publishing job downloads.
+  const release = jobs.find((job) => job.startsWith("github-release:"));
+  assert.match(release, /pattern: novamira-hq-desktop-\*-release\n/);
+  assert.match(desktop, /name: \$\{\{ matrix\.artifact \}\}-release\n/);
+  const artifacts = [...desktop.matchAll(/artifact: (\S+)\n/g)].map(
+    (match) => match[1],
+  );
+  assert.deepEqual(artifacts, [
+    "novamira-hq-desktop-linux-x86_64",
+    "novamira-hq-desktop-windows-x86_64",
+  ]);
 
   // Every compiled executable this release publishes is run before it is
   // uploaded, on the platform that compiled it.

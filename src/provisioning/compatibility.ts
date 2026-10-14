@@ -85,6 +85,9 @@ export const REQUIRED_FEATURES = [
 ] as const;
 
 export const PROTECTED_RESOURCE_PATH = "/.well-known/oauth-protected-resource";
+
+/** The `User-Agent` of HQ's one unauthenticated site request. */
+export const SITE_REQUEST_USER_AGENT = `novamira-hq/${VERSION}`;
 /** 256 KiB. The real document is under 1 KiB; a themed 404 page is not. */
 export const METADATA_MAX_BYTES = 262_144;
 export const DEFAULT_METADATA_TIMEOUT_MS = 10_000;
@@ -557,7 +560,7 @@ async function fetchMetadata(
       // No Authorization, no Cookie. Ever. See the module comment.
       headers: {
         Accept: "application/json",
-        "User-Agent": `novamira-hq/${VERSION}`,
+        "User-Agent": SITE_REQUEST_USER_AGENT,
       },
       redirect: "manual",
       signal,

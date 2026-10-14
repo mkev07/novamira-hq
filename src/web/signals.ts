@@ -135,6 +135,8 @@ export interface UpdateSignals {
  */
 export interface SetupSignals {
   readonly enableAiAbilities: boolean;
+  /** cPanel (directly or through WHM) without WP Toolkit: approval for the temporary installer. */
+  readonly allowTemporaryInstaller: boolean;
   /** Immediate local feedback while the setup-start request is in flight. */
   readonly submitting: boolean;
 }
@@ -338,7 +340,11 @@ export function defaultDashboardSignals(
     },
     diagnostics: { profile: "" },
     updates: { loading: false, installing: false },
-    setup: { enableAiAbilities: false, submitting: false },
+    setup: {
+      enableAiAbilities: false,
+      allowTemporaryInstaller: false,
+      submitting: false,
+    },
   };
 }
 

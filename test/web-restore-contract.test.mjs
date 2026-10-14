@@ -222,3 +222,49 @@ test("restore form uses explicit boolean acknowledgement and escaped labels", as
     /&lt;script&gt;/,
   );
 });
+
+test("dashboard backup creation hands the job's abort signal to the provider so shutdown cannot hang", async () => {
+  let received;
+  const client = {
+    provider: "cpanel",
+    async listEnvironments() {
+      return [{ id: "live", primaryDomain: "https://example.test" }];
+    },
+    async read() {
+      return [{ name: "backups.create", supported: true }];
+    },
+    action(request) {
+      received = request.signal;
+      return new Promise((_, reject) =>
+        request.signal.addEventListener(
+          "abort",
+          () => reject(request.signal.reason),
+          { once: true },
+        ),
+      );
+    },
+  };
+  const service = createRestoreService(
+    {
+      async requireHostingProfile() {
+        return { config: "original" };
+      },
+    },
+    {
+      async clientFromProfile() {
+        return client;
+      },
+    },
+    () => 0,
+  );
+  const review = await service.planCreate(target);
+  service.start(review.id);
+  for (let turn = 0; turn < 50 && received === undefined; turn++)
+    await new Promise((resolve) => setImmediate(resolve));
+  assert.ok(received instanceof AbortSignal);
+  assert.equal(received.aborted, false);
+  assert.equal(service.snapshot(review.id).status, "running");
+  await service.shutdown();
+  assert.equal(received.aborted, true);
+  assert.equal(service.snapshot(review.id).status, "needs_verification");
+});

@@ -251,7 +251,8 @@ export function createHostingConfigHandlers(
    * Go's `applyCompanySelection`. `auto` validates the credential against the
    * provider and adopts the account scope it reports; InstaWP and Pressable
    * have no such scope, so their profiles keep none even though the credential
-   * is still validated.
+   * is still validated. WHM is validated for every selection, so a token that
+   * WHM refuses is never saved.
    */
   const resolveCompany = async (
     provider: ProviderKind,
@@ -262,11 +263,19 @@ export function createHostingConfigHandlers(
     options: HostingOptions,
   ): Promise<string | undefined> => {
     const requested = selection.trim();
-    if (requested === COMPANY_NONE || requested === "") return undefined;
-    if (requested !== COMPANY_AUTO) return requested;
+    const none = requested === COMPANY_NONE || requested === "";
+    // A WHM token is always checked before it is saved: it reaches every
+    // account it may list, and a mistyped or revoked one must not be stored.
+    const validateFirst = provider === "whm";
+    if (!validateFirst) {
+      if (none) return undefined;
+      if (requested !== COMPANY_AUTO) return requested;
+    }
+    const explicit = !none && requested !== COMPANY_AUTO;
     const candidate: HostingProfile = {
       provider,
       credential,
+      ...(explicit ? { companyId: requested } : {}),
       ...(apiBaseUrl === undefined ? {} : { apiBaseUrl }),
     };
     const client = await hosting.clientFromEntry(
@@ -277,6 +286,8 @@ export function createHostingConfigHandlers(
       hostingHttpLimits(options),
     );
     const validation = await client.validate();
+    if (none) return undefined;
+    if (explicit) return requested;
     if (provider === "instawp" || provider === "pressable") return undefined;
     return validation.companyId ?? undefined;
   };
